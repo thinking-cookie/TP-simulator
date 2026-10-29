@@ -59,13 +59,6 @@ This is a simplified practice tool. Real TP test marking covers more items.
 - **Checkpoint retry.** Learners can replay one weak course without restarting the whole circuit.
 - **Automatic and manual.** Covers both Class 3A (auto) and Class 3 (manual) learners.
 
-## Launch and results
-
-- Launched free via Instagram reel, link shared to anyone who commented "FREE"
-- Reel views: _____
-- People who requested the link: _____
-- Feedback received and changes made: _____
-
 ## What's next
 
 - [ ] More circuit layouts (other driving centres)
