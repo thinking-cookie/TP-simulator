@@ -69,7 +69,7 @@ This is a simplified practice tool. Real TP test marking covers more items.
 
 Found it useful? Follow, like and share to help more learners find it:
 
-[![TikTok](https://img.shields.io/badge/TikTok-Follow%20%26%20like-000000?logo=tiktok&logoColor=white)](https://vt.tiktok.com/ZSgsWy389/)
+[![TikTok](https://img.shields.io/badge/TikTok-@thedesignessentials__-000000?logo=tiktok&logoColor=white)](https://www.tiktok.com/@thedesignessentials_)
 
 ## Run it locally
 
