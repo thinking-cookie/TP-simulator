@@ -4,6 +4,9 @@
 
 ▶ **[Try it live](https://thinking-cookie.github.io/TP-simulator/)**
 
+[![TikTok](https://img.shields.io/badge/TikTok-@thedesignessentials__-000000?logo=tiktok&logoColor=white)](https://www.tiktok.com/@thedesignessentials_)  
+**Like it? Follow, like and share on TikTok to help more learners find it.**
+
 ![Top-down view of the practice circuit with live demerit scoring](screenshots/top-view.png)
 
 ---
@@ -64,12 +67,6 @@ This is a simplified practice tool. Real TP test marking covers more items.
 - [ ] More circuit layouts (other driving centres)
 - [ ] Progress tracking across sessions
 - [ ] Theory test (FTT/BTT) quiz mode
-
-## Support the project
-
-Found it useful? Follow, like and share to help more learners find it:
-
-[![TikTok](https://img.shields.io/badge/TikTok-@thedesignessentials__-000000?logo=tiktok&logoColor=white)](https://www.tiktok.com/@thedesignessentials_)
 
 ## Run it locally
 
