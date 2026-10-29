@@ -119,6 +119,19 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
   .panel{overflow:visible}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+/* name gate */
+.gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(10,12,15,.86);backdrop-filter:blur(3px)}
+.gate form{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;width:100%;max-width:360px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
+.gate h2{margin:0;font-family:var(--display);font-size:34px;line-height:1;color:var(--fg)}
+.gate p{margin:0;color:#cdd2d9;line-height:1.45}
+.gate input{font:inherit;font-size:16px;background:var(--raise);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.gate input:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.gate .err{color:var(--bad);font-size:12.5px;min-height:1em}
+.gate .btn{font-size:18px;padding:10px 12px}
+.gate .btn[disabled]{opacity:.6;cursor:wait}
+.gate small{color:var(--muted);font-size:11.5px}
+.player{font-size:12px;color:var(--muted)} .player b{color:var(--fg)}
+.player button{background:none;border:0;color:var(--sky);padding:0;font-size:12px;text-decoration:underline}
 </style>
 
 </head>
@@ -172,7 +185,7 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
   <aside class="panel">
     <div class="card">
       <div class="head">
-        <div><h1>TP Circuit Trainer</h1><div class="sub">Singapore practical test practice</div></div>
+        <div><h1>TP Circuit Trainer</h1><div class="sub">Singapore practical test practice</div><div class="player" id="playerLine" hidden>Playing as <b id="playerName"></b> · <button type="button" id="playerChange">change</button></div></div>
         <label class="mapsel" for="mapSel"><span class="lbl">Map</span><select id="mapSel"><option value="circuit">Practice circuit</option><option value="cdc">CDC Ubi circuit</option></select></label>
         <label class="mapsel" for="gbSel"><span class="lbl">Gearbox</span><select id="gbSel"><option value="auto">Automatic</option><option value="manual">Manual with clutch</option></select></label>
         <div class="hbtns"><button class="btn ghost" id="cpBtn" title="Choose a checkpoint to practise">Checkpoints</button><button class="btn" id="restart">Restart <span style="opacity:.6">↵</span></button></div>
@@ -230,6 +243,66 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
     </div>
   </aside>
 </div>
+
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateT">
+  <form id="gateForm" novalidate>
+    <h2 id="gateT">Before you drive</h2>
+    <p>Enter your name to start practising. It's free.</p>
+    <label class="lbl" for="gateName">Your name</label>
+    <input id="gateName" name="name" type="text" maxlength="40" autocomplete="name" placeholder="e.g. Wei Ling" required>
+    <div class="err" id="gateErr" aria-live="polite"></div>
+    <button class="btn" id="gateBtn" type="submit">Save &amp; play</button>
+    <small>Your name is sent to the trainer's creator to count players. Nothing else is collected.</small>
+  </form>
+</div>
+<iframe name="gateSink" title="" aria-hidden="true" tabindex="-1" style="display:none"></iframe>
+
+<script>
+// Name gate: saves the player's name to the creator's Google Form, then lets them play. Never blocks play if sending fails.
+(() => {
+  const FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeX5JCKJz8nysczQptAT_mlhZH2z7xA-dbemvRqffus2qCcqA/formResponse';
+  const FIELD = 'entry.1771444461';
+  const KEY = 'tp-player';
+  const gate = document.getElementById('gate'), form = document.getElementById('gateForm'),
+        input = document.getElementById('gateName'), err = document.getElementById('gateErr'), btn = document.getElementById('gateBtn'),
+        line = document.getElementById('playerLine'), nameEl = document.getElementById('playerName');
+  let saved = ''; try { saved = localStorage.getItem(KEY) || ''; } catch(e) {}
+
+  // Keep typing in the name box away from the driving controls.
+  ['keydown','keyup'].forEach(t => gate.addEventListener(t, e => e.stopPropagation()));
+
+  function showLine(n){ nameEl.textContent = n; line.hidden = !n; }
+  function open(){ gate.hidden = false; input.value = saved; err.textContent = ''; setTimeout(() => input.focus(), 30); }
+  function close(){ gate.hidden = true; const cv = document.getElementById('cv'); if (cv) cv.focus(); }
+
+  function send(name){
+    const body = new URLSearchParams({ [FIELD]: name });
+    // Google Forms gives no readable reply to other sites, so this is send-and-forget.
+    return fetch(FORM, { method:'POST', mode:'no-cors', body }).catch(() => {
+      // Fallback: a plain form post into a hidden frame.
+      try {
+        const f = document.createElement('form'); f.method = 'POST'; f.action = FORM; f.target = 'gateSink'; f.style.display = 'none';
+        const i = document.createElement('input'); i.type = 'hidden'; i.name = FIELD; i.value = name; f.appendChild(i);
+        document.body.appendChild(f); f.submit(); setTimeout(() => f.remove(), 3000);
+      } catch(e) {}
+    });
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = input.value.replace(/\s+/g,' ').trim();
+    if (name.length < 2){ err.textContent = 'Please enter at least 2 letters.'; input.focus(); return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    await Promise.race([send(name), new Promise(r => setTimeout(r, 2500))]);
+    saved = name; try { localStorage.setItem(KEY, name); } catch(e) {}
+    btn.disabled = false; btn.textContent = 'Save & play';
+    showLine(name); close();
+  });
+  document.getElementById('playerChange').addEventListener('click', open);
+
+  if (saved) showLine(saved); else open();
+})();
+</script>
 
 <script>
 (() => {
