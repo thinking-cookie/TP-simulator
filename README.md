@@ -36,11 +36,22 @@ A browser-based trainer that lets learners **drive** the circuit, not just watch
 - **Realistic car sounds** — engine, indicator, horn
 - **2 maps** — a practice circuit and a circuit modelled on the CDC Ubi layout
 - **Checkpoint retry** — jump back to any course and practise it on repeat
+- **Road rules on the CDC map** — a signalised junction, a zebra crossing with pedestrians, and STOP lines at the S-course and crank exits
+- **Other road users** — three cars on keep-left loops (they signal, queue and stop at red lights) and pedestrians at the zebra. Press `T` to turn them off
+- **Test areas marked** — each course is tinted with a numbered name plate, signposts at each entrance, and your target bay and lot highlighted
+- **Mistake map** — at the end or on a fail, a map shows a numbered marker where each fault happened
+- **Beginner guide** (off by default, press `G`) — tells you when to get ready to turn, signal and check, when to brake for a line, and when you are too close, plus parking-sensor beeps when reversing
+- **Over-the-shoulder checks** — tap `Q`/`E` for a quick glance, hold to look out of the rear side window
+- **3D kerbs** in the driver's seat and mirrors, traced from the same map used for kerb hits
 - **Works on desktop and mobile**, single HTML file, no sign-up
 
 | Driver's seat | Night mode |
 |---|---|
 | ![Driver's seat view](screenshots/driver-view.png) | ![Night mode](screenshots/night.png) |
+
+| Traffic light on the CDC map | Beginner guide at the zebra |
+|---|---|
+| ![Top-down view at the signalised junction](screenshots/cdc-traffic.png) | ![Driver's seat with the beginner guide card](screenshots/beginner-guide.png) |
 
 ## Demerit rules used
 
@@ -53,6 +64,20 @@ A browser-based trainer that lets learners **drive** the circuit, not just watch
 | Mounting a kerb (above 10 km/h) | Immediate fail |
 | More than 18 points | Fail |
 
+On the CDC map, road rules add:
+
+| Fault | Points |
+|---|---|
+| Going on amber when you could stop | +8 |
+| Pulling out in front of a car so it brakes hard | +8 |
+| Stopping on the zebra crossing | +10 |
+| Going on a red light | Immediate fail |
+| Not stopping at a STOP line | Immediate fail |
+| Not giving way to a pedestrian on the zebra | Immediate fail |
+| Hitting another car or a person | Immediate fail |
+
+Road-rule values follow [BTT's published guide](https://www.btt.sg/en/blog/immediate-failures-singapore-practical-driving-test) to the TP marking sheet. The STOP lines and traffic light placement are practice features, not taken from the CDC circuit diagram.
+
 This is a simplified practice tool. Real TP test marking covers more items.
 
 ## Product decisions
@@ -61,6 +86,8 @@ This is a simplified practice tool. Real TP test marking covers more items.
 - **Scoring over realism.** The physics are simple on purpose. The value is in building the right habits — signal, check, turn — not in a driving simulator.
 - **Checkpoint retry.** Learners can replay one weak course without restarting the whole circuit.
 - **Automatic and manual.** Covers both Class 3A (auto) and Class 3 (manual) learners.
+- **Beginner help is opt-in.** The guide and parking beeps are off by default, so learners practise the way the test runs and switch help on only when they need it.
+- **Show where, not just what.** The mistake map ties each fault to a spot on the circuit, so learners know which corner to practise next.
 
 ## What's next
 

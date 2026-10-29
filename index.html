@@ -131,6 +131,24 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
 .gate .btn[disabled]{opacity:.6;cursor:wait}
 .gate small{color:var(--muted);font-size:11.5px}
 .player{font-size:12px;color:var(--muted)} .player b{color:var(--fg)}
+.mk{display:grid;grid-template-columns:22px 1fr;gap:7px 10px;align-items:center;font-size:12.5px;line-height:1.35;color:#cdd2d9}
+.mk b{color:var(--fg)}
+.sw{width:20px;height:16px;border-radius:4px;display:grid;place-items:center;box-sizing:border-box;justify-self:center;font-style:normal}
+.sw.tl{background:#0d0e10;border:1px solid #f2c40f;width:12px;height:24px;display:flex;flex-direction:column;justify-content:space-around;align-items:center;padding:1px 0}
+.sw.tl s{display:block;width:6px;height:6px;border-radius:50%;background:#2d3035}
+.sw.tl s:first-child{background:#ff3b30}
+.sw.zb{background:repeating-linear-gradient(0deg,#f4f4f2 0 3px,#3c4047 3px 6px)}
+.sw.st{background:#c4121c;color:#fff;font:700 8px var(--display);clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);width:22px;height:22px;border-radius:0}
+.sw.ar{background:#3c4047;color:#fff;font-weight:700}
+.mm{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.mm img{display:block;width:100%;border-radius:6px;border:1px solid var(--line)}
+.mml{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
+.mml li{display:grid;grid-template-columns:20px 38px 1fr auto;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.mml .mmn{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--warn);color:#111;font-weight:700;font-size:11px}
+.mml .mmx .mmn{background:var(--bad)}
+.mml .mmt{color:var(--muted)} .mml b{color:var(--bad)}
+.mmnone{color:var(--ok)!important;font-weight:700}
+.lgn{display:inline-grid;place-items:center;min-width:15px;height:15px;border-radius:50%;background:var(--warn);color:#111;font-size:10px;margin-right:2px}
 .player button{background:none;border:0;color:var(--sky);padding:0;font-size:12px;text-decoration:underline}
 </style>
 
@@ -154,14 +172,16 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
         <div class="k"><kbd>V</kbd><kbd>I</kbd></div><div>Manual: hold clutch at biting point / start engine</div>
         <div class="k"><kbd>⌫</kbd></div><div>Retry latest checkpoint (pick others with the Checkpoints button)</div>
         <div class="k"><kbd>Z</kbd><kbd>X</kbd></div><div>Left / right signal (turns off after the turn)</div>
-        <div class="k"><kbd>Q</kbd><kbd>E</kbd></div><div>Check left / right blind spot</div>
+        <div class="k"><kbd>Q</kbd><kbd>E</kbd></div><div>Check left / right blind spot. Hold to look over your shoulder</div>
         <div class="k"><kbd>C</kbd></div><div>Switch view: car-up, north-up, driver's seat</div>
         <div class="k"><kbd>B</kbd></div><div>Driver's seat: 360° camera on the dash screen on / off</div>
+        <div class="k"><kbd>T</kbd></div><div>CDC map: other cars and people on / off</div>
+        <div class="k"><kbd>G</kbd></div><div>Beginner guide on / off (driver's seat): when to get ready, where to stop, parking sensor beeps</div>
       </div>
-      <div style="color:var(--muted)">Follow the yellow arrow. Before turning inside a blue dashed zone, signal (<kbd>Z</kbd>/<kbd>X</kbd>) and check your blind spot (<kbd>Q</kbd>/<kbd>E</kbd>).</div>
+      <div style="color:var(--muted)">Follow the yellow arrow. Before turning inside a blue dashed zone, signal (<kbd>Z</kbd>/<kbd>X</kbd>) and check your blind spot (<kbd>Q</kbd>/<kbd>E</kbd>). On the CDC map, stop at red lights and STOP lines and give way at the zebra.</div>
     </div>
 
-    <div class="stagebtns"><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
+    <div class="stagebtns"><button class="btn ghost" id="bgBtn" title="Turn the beginner guide on (G)" aria-pressed="false">🎓 Guide</button><button class="btn ghost" id="trafBtn" title="Other cars and people on or off (T)" aria-pressed="true" hidden>🚗 Traffic</button><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
 
     <div class="ov" id="cpMenu" hidden>
       <div class="box">
@@ -224,6 +244,19 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
       <div class="tip" id="tip"></div>
     </div>
 
+    <div class="card" id="mapKey" hidden>
+      <span class="lbl">Map key</span>
+      <div class="mk">
+        <i class="sw" style="background:rgba(246,201,21,.25);border:1.5px dashed #f6c915"></i><div><b>Test area.</b> Gold plate shows the name and your task number.</div>
+        <i class="sw" style="background:#16365c;border-radius:50%;width:18px;height:18px;border:1.5px solid #fff"></i><div><b>CDC station number</b> from the circuit diagram.</div>
+        <i class="sw" style="background:rgba(98,204,255,.12);border:1.5px dashed #62ccff"></i><div><b>Blind-spot zone.</b> Signal and check before you turn.</div>
+        <i class="sw tl"><s></s><s></s><s></s></i><div><b>Traffic light</b> at the centre junction. Stop behind the white line on red, and on amber if you can.</div>
+        <i class="sw zb"></i><div><b>Zebra crossing</b> with flashing amber globes. Give way to anyone on it.</div>
+        <i class="sw st">STOP</i><div><b>STOP line</b> at the S-course and crank exits. Stop fully, then go when clear.</div>
+        <i class="sw ar">↑</i><div><b>Lane arrow.</b> Keep left and follow it.</div>
+      </div>
+    </div>
+
     <div class="card">
       <span class="lbl">Demerit sheet</span>
       <div class="log" id="log"><span class="empty">No faults recorded.</span></div>
@@ -239,7 +272,16 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
         <b style="color:var(--bad)">FAIL</b><div>Mounting a kerb (hitting it above 10 km/h)</div>
         <b style="color:var(--bad)">FAIL</b><div>More than 18 points</div>
       </div>
-      <div class="foot">Other keys: <kbd>C</kbd> view, <kbd>P</kbd> pause, <kbd>−</kbd> <kbd>=</kbd> zoom, <kbd>Enter</kbd> restart, <kbd>⌫</kbd> Backspace retry checkpoint, <kbd>H</kbd> horn, <kbd>M</kbd> sound on/off, <kbd>N</kbd> night mode.<br>Sounds: Kenney (CC0) via soundcn.<br>A simplified practice game. Real TP test marking covers more items and differs in detail.</div>
+      <div class="keys" id="roadRules" style="grid-template-columns:auto 1fr" hidden>
+        <b style="color:var(--warn)">+8</b><div>Going on amber when you could stop</div>
+        <b style="color:var(--warn)">+8</b><div>Pulling out in front of a car so it brakes hard</div>
+        <b style="color:var(--warn)">+10</b><div>Stopping on the zebra crossing</div>
+        <b style="color:var(--bad)">FAIL</b><div>Going on a red light</div>
+        <b style="color:var(--bad)">FAIL</b><div>Not stopping at a STOP line</div>
+        <b style="color:var(--bad)">FAIL</b><div>Not giving way to a pedestrian on the zebra</div>
+        <b style="color:var(--bad)">FAIL</b><div>Hitting another car or a person</div>
+      </div>
+      <div class="foot">Other keys: <kbd>C</kbd> view, <kbd>P</kbd> pause, <kbd>−</kbd> <kbd>=</kbd> zoom, <kbd>Enter</kbd> restart, <kbd>⌫</kbd> Backspace retry checkpoint, <kbd>H</kbd> horn, <kbd>M</kbd> sound on/off, <kbd>N</kbd> night mode.<br>Sounds: Kenney (CC0) via soundcn.<br>A simplified practice game. Real TP test marking covers more items and differs in detail. CDC road-rule values follow BTT's published guide to the TP marking sheet.</div>
     </div>
   </aside>
 </div>
@@ -313,7 +355,8 @@ const K = 0.6, S_W = 4.4;                      // kerb width, S-course lane widt
 let MAPID = 'circuit', MAP = null;
 let WW, WH, RECTS, CRANK, PAR_LOT, VER_LOT, VER_H, TURN_RECT, TURN_MOUTH, SLOPE_RECT, STOP_LINE_Y, CREST_Y,
     SPATH, S_TOPX, GATES, ZONES, TARGETS, APPROACH, START, ISLANDS, OUTER,
-    ORDER = ['crank','s','slope','turn','par','ver'], ROUTE = null, STN = null, MAP_TIPS = {}, WHERE = null, MARK = null;
+    ORDER = ['crank','s','slope','turn','par','ver'], ROUTE = null, STN = null, MAP_TIPS = {}, WHERE = null, MARK = null,
+    ROAD = null, COURSES = null, SIGNPOSTS = null;
 
 function catmull(ctrl, step){
   const out = [];
@@ -333,6 +376,733 @@ function circuitSPath(){
     for (let i=0;i<n;i++){ h+=k*ds/2; x+=Math.cos(h)*ds; y+=Math.sin(h)*ds; h+=k*ds/2; pts.push([x,y]); } }
   while (y > 56.3) { y -= 0.2; pts.push([x,y]); }
   return pts;
+}
+
+// ---------- Road features (CDC map): test-area markings, traffic light, zebra crossing, STOP lines, other road users ----------
+// Fault values follow BTT's guide to the TP marking sheet: a red light, a missed STOP line, not giving way at a zebra
+// and any accident are immediate failures; going on amber costs 8, stopping on a crossing 10, making a car brake 8.
+let trafficOn = true; try { trafficOn = localStorage.getItem('tp-traffic') !== '0'; } catch(e) {}
+let TT = 0, AIS = [], PEDS = [], LOOPS = [], prevFront = null, prevSig = [];
+const AI_HALF = 2.2, AI_HW = 0.875, PSTEP = 0.25, SIG_CYCLE = 38;
+const AI_COLS = [{c:'#2f6fd6', taxi:true}, {c:'#b8242f'}, {c:'#c9ccd1'}, {c:'#2b2e33'}];
+function sigState(grp, t){ const u = ((t % SIG_CYCLE) + SIG_CYCLE) % SIG_CYCLE, o = grp === 'EW' ? u : (u + 19) % SIG_CYCLE;
+  return o < 14 ? 'G' : o < 17 ? 'A' : 'R'; }
+const SIGCOL = {R:'#ff3b30', A:'#ffb020', G:'#2fe07a'};
+function lineInfo(Ln, p){ const mx = (Ln.a[0]+Ln.b[0])/2, my = (Ln.a[1]+Ln.b[1])/2, d = Ln.dir, dx = p.x-mx, dy = p.y-my;
+  return {along: dx*d[0]+dy*d[1], lat: Math.abs(-dx*d[1]+dy*d[0]), half: Math.hypot(Ln.b[0]-Ln.a[0], Ln.b[1]-Ln.a[1])/2}; }
+const alignOf = (th, d) => Math.cos(th)*d[0] + Math.sin(th)*d[1];
+
+// closed driving loops with rounded corners, resampled every 25 cm
+function buildLoop(corners, r){
+  const n = corners.length, raw = [];
+  for (let i=0;i<n;i++){
+    const a = corners[(i+n-1)%n], b = corners[i], c = corners[(i+1)%n];
+    const l1 = Math.hypot(b[0]-a[0], b[1]-a[1]), l2 = Math.hypot(c[0]-b[0], c[1]-b[1]);
+    const p1 = [b[0]-(b[0]-a[0])/l1*r, b[1]-(b[1]-a[1])/l1*r], p2 = [b[0]+(c[0]-b[0])/l2*r, b[1]+(c[1]-b[1])/l2*r];
+    for (let k=0;k<=12;k++){ const t = k/12, u = 1-t; raw.push([u*u*p1[0]+2*u*t*b[0]+t*t*p2[0], u*u*p1[1]+2*u*t*b[1]+t*t*p2[1]]); }
+  }
+  raw.push(raw[0]);
+  const xs = [], ys = []; let carry = 0;
+  for (let i=1;i<raw.length;i++){
+    const a = raw[i-1], b = raw[i], sl = Math.hypot(b[0]-a[0], b[1]-a[1]); let d = carry;
+    while (d < sl){ const t = d/sl; xs.push(a[0]+(b[0]-a[0])*t); ys.push(a[1]+(b[1]-a[1])*t); d += PSTEP; }
+    carry = d - sl;
+  }
+  const N = xs.length, hs = new Float32Array(N);
+  for (let i=0;i<N;i++){ const j = (i+1)%N, k = (i+N-1)%N; hs[i] = Math.atan2(ys[j]-ys[k], xs[j]-xs[k]); }
+  return {xs, ys, hs, N, len: N*PSTEP};
+}
+function pathAt(lp, s){ const u = ((s % lp.len) + lp.len) % lp.len, f = u/PSTEP, i = Math.floor(f) % lp.N, j = (i+1) % lp.N, t = f - Math.floor(f);
+  return {x: lp.xs[i]+(lp.xs[j]-lp.xs[i])*t, y: lp.ys[i]+(lp.ys[j]-lp.ys[i])*t, h: lp.hs[i]}; }
+function buildRoad(){ LOOPS = ROAD ? ROAD.loops.map(l => buildLoop(l.pts, 6)) : []; }
+
+function resetTraffic(){
+  if (!S) return;
+  S.road = ROAD ? {sig: ROAD.signals.map(() => ({amberDist:null, amberV:0})), stop: ROAD.stops.map(() => ({ok:false})), zt:0, zpen:false, cut:-99, hint:-99} : null;
+  prevFront = null; prevSig = [];
+  AIS = []; PEDS = [];
+  if (!ROAD) return;
+  let n = 0;
+  ROAD.loops.forEach((l, li) => { const lp = LOOPS[li];
+    for (let j=0;j<l.cars;j++){ AIS.push({loop: li, s: lp.len*(j+0.3)/l.cars + li*41, v: 0, col: AI_COLS[n % AI_COLS.length], blink:null, brk:false}); n++; } });
+  const m = mid(S.car);
+  for (const a of AIS){
+    for (let k=0;k<30;k++){ const p = pathAt(LOOPS[a.loop], a.s);
+      const near = Math.hypot(p.x-m.x, p.y-m.y) < 16 || AIS.some(b => b !== a && b.loop >= 0 && Math.hypot(pathAt(LOOPS[b.loop], b.s).x-p.x, pathAt(LOOPS[b.loop], b.s).y-p.y) < 9);
+      if (!near) break; a.s += 13; }
+  }
+  const z = ROAD.zebra;
+  PEDS = [{side:'N', st:'wait', t:5, x:z.wait.N[0]-0.25, y:z.wait.N[1], col:'#e85d75', walk:0},
+          {side:'S', st:'wait', t:15, x:z.wait.S[0]+0.3, y:z.wait.S[1], col:'#3a8ee6', walk:0}];
+}
+
+// ---------- road users ----------
+function aiPose(a){ const p = pathAt(LOOPS[a.loop], a.s); return p; }
+function aiAxis(a){ const p = aiPose(a), cx = Math.cos(p.h), sy = Math.sin(p.h); return [[p.x,p.y],[p.x+cx*1.6,p.y+sy*1.6],[p.x-cx*1.6,p.y-sy*1.6]]; }
+function inAiBox(a, x, y, m){ const p = aiPose(a), dx = x-p.x, dy = y-p.y, c = Math.cos(p.h), s = Math.sin(p.h);
+  const lx = dx*c + dy*s, ly = -dx*s + dy*c; return Math.abs(lx) < AI_HALF+m && Math.abs(ly) < AI_HW+m; }
+function inPlayer(x, y, m){ const c = S.car, dx = x-c.x, dy = y-c.y, co = Math.cos(c.th), si = Math.sin(c.th);
+  const lx = dx*co + dy*si, ly = -dx*si + dy*co; return lx > -REAR-m && lx < FRONT+m && Math.abs(ly) < HALF+m; }
+function pedsCrossing(){ return trafficOn && PEDS.some(p => p.st === 'cross'); }
+function zebraGap(x, y, th){ // distance from a front point to the crossing along the road, or null if not heading at it
+  const z = ROAD.zebra, ch = Math.cos(th); if (Math.abs(ch) < 0.6 || y < z.y0-0.5 || y > z.y1+0.5) return null;
+  return ch > 0 ? z.x0 - x : x - z.x1;
+}
+function zebraClear(ppts){
+  const z = ROAD.zebra, inZ = (x,y,m) => x > z.x0-m && x < z.x1+m && y > z.y0 && y < z.y1;
+  const c = S.car, f = toWorld(c, FRONT, 0), g = zebraGap(f.x, f.y, c.th), v = Math.abs(c.v);
+  if (ppts.some(p => inZ(p.x, p.y, 0.8))) return false;
+  if (g !== null && c.v > 0.5 && g > -0.5 && g < Math.max(4, v*v/8 + 2)) return false;
+  for (const a of AIS){ const p = aiPose(a), fx = p.x + Math.cos(p.h)*AI_HALF, fy = p.y + Math.sin(p.h)*AI_HALF;
+    if (aiAxis(a).some(q => inZ(q[0], q[1], 1.2))) return false;
+    const ga = zebraGap(fx, fy, p.h); if (ga !== null && a.v > 0.5 && ga > -0.5 && ga < Math.max(4, a.v*a.v/8 + 2)) return false; }
+  return true;
+}
+function pedStep(p, dt, ppts){
+  const z = ROAD.zebra;
+  if (p.st === 'wait'){
+    p.t -= dt;
+    if (p.t <= 0){ if (zebraClear(ppts)){ p.st = 'cross'; p.dir = p.side === 'N' ? 1 : -1; } else p.t = 0.4; }
+    return;
+  }
+  const ax = p.x, ay = p.y + p.dir*0.7;
+  const blocked = ppts.some(q => Math.hypot(q.x-ax, q.y-ay) < 0.8) || AIS.some(a => inAiBox(a, ax, ay, 0.3));
+  if (!blocked){ p.y += p.dir*1.35*dt; p.walk += dt; }
+  if ((p.dir > 0 && p.y >= z.wait.S[1]) || (p.dir < 0 && p.y <= z.wait.N[1])){
+    p.side = p.dir > 0 ? 'S' : 'N'; p.y = z.wait[p.side][1]; p.st = 'wait'; p.t = 9 + Math.random()*14;
+  }
+}
+function aiLook(a, i, ppts){
+  const lp = LOOPS[a.loop], out = {gap: Infinity, gapNoAI: Infinity, by: -1};
+  for (let k=0;k<=14;k++){
+    const q = pathAt(lp, a.s + AI_HALF + 0.3 + k);
+    if (out.gapNoAI === Infinity){
+      if (ppts.some(p => Math.hypot(p.x-q.x, p.y-q.y) < 1.6)){
+        out.gapNoAI = k;
+        // only when you cross or pull out in front of it, or reverse into it; a car following you is responsible for its own gap
+        const crossing = angDiff(S.car.th, pathAt(lp, a.s).h) > 0.6 || S.car.v < -0.3;
+        if (crossing && a.v > 2 && S.t - S.road.cut > 10 && a.v*a.v/(2*Math.max(0.3, k-0.7)) > 4.5){
+          S.road.cut = S.t; addDemerit(8, 'Pulled out in front of a car, making it brake hard'); flash('YOU MADE A CAR BRAKE HARD  +8', 'bad'); }
+      }
+      else if (PEDS.some(p => Math.hypot(p.x-q.x, p.y-q.y) < 1.4)) out.gapNoAI = k;
+    }
+    if (out.by < 0) AIS.forEach((b,j) => { if (out.by < 0 && j !== i && aiAxis(b).some(r => Math.hypot(r[0]-q.x, r[1]-q.y) < 1.5)){ out.by = j; out.gapAI = k; } });
+    if (out.gapNoAI !== Infinity && out.by >= 0) break;
+  }
+  const p = aiPose(a), hx = Math.cos(p.h), hy = Math.sin(p.h), f = {x: p.x+hx*AI_HALF, y: p.y+hy*AI_HALF};
+  for (const sg of ROAD.signals){
+    if (hx*sg.dir[0] + hy*sg.dir[1] < 0.85) continue;
+    const li = lineInfo(sg, f); if (li.lat > li.half+1 || li.along < -16 || li.along > 0.3) continue;
+    const st = sigState(sg.grp, TT); if (st === 'R' || (st === 'A' && -li.along > 3.5)) out.gapNoAI = Math.min(out.gapNoAI, -li.along - 0.8);
+  }
+  if (PEDS.some(pd => pd.st === 'cross' || pd.t < 1.2)){ const g = zebraGap(f.x, f.y, p.h); if (g !== null && g > -1 && g < 15) out.gapNoAI = Math.min(out.gapNoAI, g - 1.0); }
+  out.gap = Math.min(out.gapNoAI, out.by >= 0 ? out.gapAI : Infinity);
+  return out;
+}
+function trafficStep(dt){
+  TT += dt;
+  if (!ROAD || !trafficOn) return;
+  const c = S.car, ppts = LOCAL_PTS.map(([lx,ly]) => toWorld(c,lx,ly));
+  for (const p of PEDS) pedStep(p, dt, ppts);
+  const info = AIS.map((a,i) => aiLook(a, i, ppts));
+  info.forEach((inf,i) => { if (inf.by >= 0 && info[inf.by].by === i && i < inf.by) inf.gap = inf.gapNoAI; });   // two cars waiting on each other: the first goes
+  AIS.forEach((a,i) => {
+    const lp = LOOPS[a.loop], h0 = pathAt(lp, a.s).h, h1 = pathAt(lp, a.s+7).h, hb = pathAt(lp, a.s+14).h;
+    const cruise = angDiff(h1, h0) > 0.35 ? 2.6 : 4.4, gap = info[i].gap;
+    const vt = Math.min(cruise, Math.sqrt(2*2.8*Math.max(0, gap - 1.0)));
+    a.brk = vt < a.v - 0.05 || a.v < 0.05;
+    a.v = a.v > vt ? Math.max(vt, a.v - 6.5*dt) : Math.min(vt, a.v + 1.4*dt);
+    a.s += a.v*dt;
+    let d = (hb - h0) % (2*Math.PI); if (d > Math.PI) d -= 2*Math.PI; if (d < -Math.PI) d += 2*Math.PI;
+    a.blink = Math.abs(d) > 0.6 ? (d < 0 ? 'L' : 'R') : null;
+  });
+}
+
+// ---------- road rules for the player ----------
+function roadRules(dt){
+  const c = S.car, f = toWorld(c, FRONT, 0);
+  if (!prevFront){ prevFront = f; return; }
+  const R = S.road;
+  ROAD.signals.forEach((sg,i) => {
+    const st = sigState(sg.grp, TT), ps = prevSig[i]; prevSig[i] = st;
+    const now = lineInfo(sg, f), was = lineInfo(sg, prevFront), al = alignOf(c.th, sg.dir), rs = R.sig[i];
+    if (st === 'A' && ps === 'G'){ rs.amberDist = (al > 0.7 && now.along < 0 && now.along > -45 && now.lat < now.half+1) ? -now.along : null; rs.amberV = Math.abs(c.v); }
+    if (st === 'G') rs.amberDist = null;
+    if (was.along < 0 && now.along >= 0 && now.lat < now.half+0.6 && al > 0.5 && c.v > 0.1){
+      if (st === 'R') fail('Proceeded on a red light', 'You crossed the white stop line while the light was red. Stop behind the line and wait for green.');
+      else if (st === 'A'){
+        if (rs.amberDist !== null && rs.amberDist > rs.amberV*rs.amberV/10 + 2){ addDemerit(8, 'Went on amber when you could stop'); flash('WENT ON AMBER  +8', 'bad'); }
+        else flash('Amber: too close to stop safely, so going is correct', 'info', 1800);
+      }
+    }
+  });
+  ROAD.stops.forEach((sp,i) => {
+    const now = lineInfo(sp, f), was = lineInfo(sp, prevFront), al = alignOf(c.th, sp.dir), rs = R.stop[i];
+    if (!rs.ok && now.lat < now.half+0.8 && al > 0.6 && now.along > -3.6 && now.along < 0.4 && Math.abs(c.v) < 0.08){
+      rs.ok = true; flash('Full stop ✓ Look right, left, right. Go when clear.', 'ok', 2000); }
+    if (was.along < 0 && now.along >= 0 && now.lat < now.half+0.6 && al > 0.5 && c.v > 0.05){
+      if (!rs.ok) fail('Did not stop at the STOP line', 'At a STOP sign you must stop completely with your front bumper just behind the white line, then move off when clear.');
+      rs.ok = false;
+    }
+    if (now.along < -12 || now.along > 8 || now.lat > now.half+6) rs.ok = false;
+  });
+  const z = ROAD.zebra, pts = LOCAL_PTS.map(([lx,ly]) => toWorld(c,lx,ly));
+  const onZ = pts.some(p => p.x > z.x0 && p.x < z.x1 && p.y > z.y0 && p.y < z.y1);
+  if (onZ && pedsCrossing() && Math.abs(c.v) > 0.3) fail('Did not give way to a pedestrian', 'Someone was on the zebra crossing. Stop before the crossing and wait until they reach the other side.');
+  if (onZ && Math.abs(c.v) < 0.05){ R.zt += dt; if (R.zt > 1 && !R.zpen){ R.zpen = true; addDemerit(10, 'Stopped on the zebra crossing'); flash('STOPPED ON THE CROSSING  +10', 'bad'); } }
+  else if (!onZ){ R.zt = 0; R.zpen = false; }
+  const zg = zebraGap(f.x, f.y, c.th);
+  if (trafficOn && zg !== null && zg > 0 && zg < 18 && c.v > 3.6 && PEDS.some(p => p.st === 'cross' || p.t < 3) && S.t - R.hint > 8){
+    R.hint = S.t; flash('Pedestrian at the zebra. Slow down and be ready to stop', 'info', 2200); }
+  if (trafficOn){
+    for (const a of AIS){
+      const p = aiPose(a), co = Math.cos(p.h), si = Math.sin(p.h);
+      const corners = [[2.2,0.875],[2.2,-0.875],[-2.2,0.875],[-2.2,-0.875],[0,0.875],[0,-0.875],[2.2,0],[-2.2,0]].map(([lx,ly]) => [p.x+lx*co-ly*si, p.y+lx*si+ly*co]);
+      if (pts.some(q => inAiBox(a, q.x, q.y, 0.02)) || corners.some(q => inPlayer(q[0], q[1], 0))){
+        Car.skid(); Sfx.play('impact-plate-heavy-001', {volume:.6}); fail('Collision with another car', 'Any accident is an immediate failure. Keep a safe gap, check mirrors and blind spots, and give way to traffic that has priority.'); return; }
+    }
+    for (const p of PEDS) if (inPlayer(p.x, p.y, 0.3)){ fail('Hit a pedestrian', 'You struck a pedestrian. Slow right down near crossings and always give way to people on them.'); return; }
+  }
+  prevFront = f;
+}
+function roadAhead(){
+  if (!ROAD) return null;
+  const c = S.car, f = toWorld(c, FRONT, 0), out = [];
+  ROAD.signals.forEach(sg => { const li = lineInfo(sg, f), al = alignOf(c.th, sg.dir);
+    if (al > 0.6 && li.along < 0 && li.along > -35 && li.lat < li.half+1.5) out.push({k:'light', d:-li.along, st:sigState(sg.grp, TT)}); });
+  ROAD.stops.forEach((sp,j) => { const li = lineInfo(sp, f), al = alignOf(c.th, sp.dir);
+    if (al > 0.6 && li.along < 0.2 && li.along > -11 && li.lat < li.half+1.5) out.push({k:'stop', d:Math.max(0,-li.along), ok:S.road.stop[j].ok}); });
+  const g = zebraGap(f.x, f.y, c.th);
+  if (g !== null && g > -4 && g < 30) out.push({k:'zebra', d:Math.max(0,g), ped: !trafficOn ? 'clear' : PEDS.some(p => p.st==='cross') ? 'cross' : PEDS.some(p => p.t < 4) ? 'wait' : 'clear'});
+  out.sort((a,b) => a.d - b.d); return out[0] || null;
+}
+
+// ---------- ground paint: lane arrows, junction lines, zebra, STOP lines, test-area tint and name plates ----------
+function groundArrow(x, y, ang){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(ang); ctx.fillStyle = 'rgba(255,255,255,.82)';
+  ctx.fillRect(-1.6,-0.13,2.3,0.26); ctx.beginPath(); ctx.moveTo(1.6,0); ctx.lineTo(0.6,-0.42); ctx.lineTo(0.6,0.42); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function drawRoadPaint(){
+  if (!ROAD) return;
+  for (const a of ROAD.arrows) groundArrow(a[0], a[1], a[2]);
+  // solid lane lines on the approach to the signalised junction: no lane changes here
+  ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.15;
+  for (const [x1,y1,x2,y2] of ROAD.solid){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+  ctx.restore();
+  // stop lines at the lights and at the STOP signs
+  const thick = (Ln, w) => { ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = w; ctx.lineCap = 'butt'; ctx.beginPath(); ctx.moveTo(Ln.a[0],Ln.a[1]); ctx.lineTo(Ln.b[0],Ln.b[1]); ctx.stroke(); ctx.restore(); };
+  for (const sg of ROAD.signals) thick(sg, 0.32);
+  for (const sp of ROAD.stops){ thick(sp, 0.42);
+    const mx = (sp.a[0]+sp.b[0])/2, my = (sp.a[1]+sp.b[1])/2;
+    ctx.save(); ctx.translate(mx - sp.dir[0]*2.1, my - sp.dir[1]*2.1); ctx.rotate(Math.atan2(sp.dir[1], sp.dir[0]) + Math.PI/2);
+    ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.font = '700 1.5px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, 0); ctx.restore(); }
+  // zebra crossing with zig-zag approach lines
+  const z = ROAD.zebra;
+  ctx.fillStyle = '#f4f4f2'; for (let y = z.y0+0.35; y < z.y1-0.3; y += 1.0) ctx.fillRect(z.x0, y, z.x1-z.x0, 0.5);
+  ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 0.13; ctx.lineJoin = 'miter';
+  for (const [xa,xb] of z.zig) for (const y of z.zigY){ ctx.beginPath(); let up = true; for (let x = xa; x <= xb+1e-6; x += 0.8){ ctx.lineTo(x, y + (up ? -0.22 : 0.22)); up = !up; } ctx.stroke(); }
+  ctx.restore();
+}
+function drawCourseAreas(){
+  if (!COURSES) return;
+  ctx.save();
+  for (const k of ORDER){
+    const C = COURSES[k]; if (!C) continue;
+    ctx.fillStyle = 'rgba(246,201,21,.13)'; ctx.strokeStyle = 'rgba(246,201,21,.8)'; ctx.lineWidth = 0.14; ctx.setLineDash([0.8,0.5]);
+    if (C.path){ ctx.save(); ctx.setLineDash([]); ctx.strokeStyle = 'rgba(246,201,21,.13)'; ctx.lineWidth = S_W; ctx.lineCap = 'butt'; ctx.lineJoin = 'round'; sPath(ctx); ctx.stroke(); ctx.restore(); }
+    for (const r of C.rects || []){ ctx.fillRect(r[0],r[1],r[2],r[3]); ctx.strokeRect(r[0]+0.07,r[1]+0.07,r[2]-0.14,r[3]-0.14); }
+    if (C.target){ const [x,y,w,h] = C.target; ctx.fillStyle = 'rgba(246,201,21,.28)'; ctx.fillRect(x,y,w,h);
+      ctx.fillStyle = '#f6c915'; ctx.font = '700 0.6px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(C.tlabel, x+w/2, y+h/2); }
+  }
+  ctx.restore();
+}
+function drawPlates(){
+  if (!COURSES) return;
+  for (const k of ORDER){
+    const C = COURSES[k]; if (!C || !C.plate) continue;
+    const [x, y, sz] = C.plate, n = ORDER.indexOf(k)+1, txt = NAMES[k].toUpperCase(), r = sz*0.55;
+    ctx.save(); ctx.font = `700 ${sz}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const tw = ctx.measureText(txt).width, w = r*2 + sz*0.45 + tw + sz*0.55, h = sz*1.45;
+    ctx.fillStyle = 'rgba(17,20,24,.82)'; rr(x, y-h/2, w, h, h*0.3); ctx.fill(); ctx.strokeStyle = 'rgba(246,201,21,.9)'; ctx.lineWidth = sz*0.08; ctx.stroke();
+    ctx.fillStyle = '#f6c915'; ctx.beginPath(); ctx.arc(x + sz*0.3 + r, y, r, 0, 7); ctx.fill();
+    ctx.fillStyle = '#16181b'; ctx.textAlign = 'center'; ctx.fillText(String(n), x + sz*0.3 + r, y + sz*0.04);
+    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left'; ctx.fillText(txt, x + sz*0.3 + r*2 + sz*0.3, y + sz*0.04);
+    ctx.restore();
+  }
+}
+function paintMiniExtras(g){
+  if (!COURSES) return;
+  g.save(); g.fillStyle = 'rgba(246,201,21,.55)';
+  for (const k of ORDER){ const C = COURSES[k]; if (!C) continue;
+    for (const r of C.rects || []) g.fillRect(r[0],r[1],r[2],r[3]);
+    if (C.path){ g.strokeStyle = 'rgba(246,201,21,.55)'; g.lineWidth = S_W; sPath(g); g.stroke(); } }
+  if (ROAD){ const z = ROAD.zebra; g.fillStyle = '#ffffff'; for (let y = z.y0+0.5; y < z.y1; y += 2) g.fillRect(z.x0, y, z.x1-z.x0, 1); }
+  g.restore();
+}
+
+// ---------- top-down drawing of signals, signs and road users ----------
+function drawTraffic(now){
+  if (!ROAD) return;
+  const blink = Math.floor(now/380) % 2 === 0;
+  // STOP signs
+  for (const sp of ROAD.stops){ const [x,y] = sp.sign; ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle = '#b5121b'; ctx.beginPath(); for (let i=0;i<8;i++){ const a = Math.PI/8 + i*Math.PI/4; ctx.lineTo(Math.cos(a)*0.55, Math.sin(a)*0.55); } ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.06; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = '700 0.36px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, 0.02); ctx.restore(); }
+  // zebra beacons (amber globes that flash)
+  const bOn = Math.floor(TT*1.4) % 2 === 0;
+  for (const [x,y] of ROAD.zebra.beacons){ ctx.fillStyle = '#16181b'; ctx.beginPath(); ctx.arc(x,y,0.42,0,7); ctx.fill(); ctx.fillStyle = bOn ? '#ffb020' : '#7a5a1c'; ctx.beginPath(); ctx.arc(x,y,0.3,0,7); ctx.fill(); }
+  // traffic signal heads
+  for (const sg of ROAD.signals){
+    const st = sigState(sg.grp, TT), [x,y] = sg.head;
+    ctx.save(); ctx.translate(x,y); ctx.rotate(Math.atan2(sg.dir[1], sg.dir[0]));
+    ctx.fillStyle = SIGCOL[st] + '40'; ctx.beginPath(); ctx.arc(0,0,1.05,0,7); ctx.fill();
+    ctx.fillStyle = '#0d0e10'; rr(-0.62,-0.27,1.24,0.54,0.12); ctx.fill(); ctx.strokeStyle = '#f2c40f'; ctx.lineWidth = 0.05; ctx.stroke();
+    [['R',0.38],['A',0],['G',-0.38]].forEach(([k,lx]) => { ctx.fillStyle = st===k ? SIGCOL[k] : '#2d3035'; ctx.beginPath(); ctx.arc(lx,0,0.16,0,7); ctx.fill(); });
+    ctx.restore();
+  }
+  if (!trafficOn) return;
+  // pedestrians
+  for (const p of PEDS){
+    ctx.save(); ctx.translate(p.x, p.y);
+    const sw = p.st === 'cross' ? Math.sin(p.walk*9)*0.16 : 0;
+    ctx.fillStyle = '#25272c'; ctx.fillRect(-0.16, sw-0.08, 0.12, 0.2); ctx.fillRect(0.04, -sw-0.08, 0.12, 0.2);
+    ctx.fillStyle = p.col; ctx.beginPath(); ctx.ellipse(0,0,0.3,0.17,0,0,7); ctx.fill();
+    ctx.fillStyle = '#3a2a20'; ctx.beginPath(); ctx.arc(0,0,0.13,0,7); ctx.fill();
+    ctx.restore();
+  }
+  // other cars
+  for (const a of AIS){
+    const p = aiPose(a);
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.h);
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; rr(-2.1,-0.76,4.4,1.75,0.45); ctx.fill();
+    ctx.fillStyle = a.col.c; rr(-2.2,-0.875,4.4,1.75,0.45); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 0.05; ctx.stroke();
+    ctx.fillStyle = '#26323f'; ctx.beginPath(); ctx.moveTo(0.55,-0.7); ctx.lineTo(1.15,-0.62); ctx.lineTo(1.15,0.62); ctx.lineTo(0.55,0.7); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-1.25,-0.64); ctx.lineTo(-0.95,-0.7); ctx.lineTo(-0.95,0.7); ctx.lineTo(-1.25,0.64); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; rr(-0.95,-0.68,1.5,1.36,0.15); ctx.fill();
+    if (a.col.taxi){ ctx.fillStyle = '#f4f4f4'; ctx.fillRect(-0.45,-0.3,0.5,0.6); ctx.fillStyle = '#1b4fa3'; ctx.font = '700 0.22px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.save(); ctx.translate(-0.2,0); ctx.rotate(Math.PI/2); ctx.fillText('TAXI',0,0.01); ctx.restore(); }
+    ctx.fillStyle = '#fff7c4'; ctx.fillRect(2.06,-0.75,0.12,0.32); ctx.fillRect(2.06,0.43,0.12,0.32);
+    ctx.fillStyle = a.brk ? '#ff3b3b' : '#8f1c24'; ctx.fillRect(-2.2,-0.75,0.12,0.3); ctx.fillRect(-2.2,0.45,0.12,0.3);
+    if (a.blink && blink){ const sy = a.blink === 'L' ? -1 : 1; ctx.fillStyle = '#ffb020'; ctx.fillRect(1.9, sy>0 ? 0.68 : -0.88, 0.3, 0.2); ctx.fillRect(-2.2, sy>0 ? 0.68 : -0.88, 0.3, 0.2);
+      ctx.fillStyle = 'rgba(255,176,32,.3)'; ctx.beginPath(); ctx.arc(2.0,0.8*sy,0.6,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(-2.1,0.8*sy,0.6,0,7); ctx.fill(); }
+    ctx.restore();
+  }
+}
+function drawTrafficGlow(){ // night: lit lamps and other cars' lights, drawn with 'lighter'
+  if (!ROAD) return;
+  const glow = (x,y,r,col) => { const g = ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); };
+  for (const sg of ROAD.signals){ const st = sigState(sg.grp, TT); glow(sg.head[0], sg.head[1], 1.6, st==='R' ? 'rgba(255,60,50,.9)' : st==='A' ? 'rgba(255,176,32,.9)' : 'rgba(47,224,122,.9)'); }
+  if (Math.floor(TT*1.4) % 2 === 0) for (const [x,y] of ROAD.zebra.beacons) glow(x, y, 1.4, 'rgba(255,176,32,.8)');
+  if (!trafficOn) return;
+  for (const a of AIS){ const p = aiPose(a), co = Math.cos(p.h), si = Math.sin(p.h);
+    for (const sy of [-0.55,0.55]){ glow(p.x + 2.4*co - sy*si, p.y + 2.4*si + sy*co, 1.2, 'rgba(255,250,220,.85)'); glow(p.x - 2.3*co - sy*si, p.y - 2.3*si + sy*co, 0.9, a.brk ? 'rgba(255,40,40,.9)' : 'rgba(255,40,40,.45)'); }
+    const gl = ctx.createLinearGradient(p.x + 2.2*co, p.y + 2.2*si, p.x + 12*co, p.y + 12*si); gl.addColorStop(0,'rgba(255,248,200,.28)'); gl.addColorStop(1,'rgba(255,248,200,0)');
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.moveTo(p.x + 2.2*co + 0.7*si, p.y + 2.2*si - 0.7*co); ctx.lineTo(p.x + 12*co + 3.5*si, p.y + 12*si - 3.5*co); ctx.lineTo(p.x + 12*co - 3.5*si, p.y + 12*si + 3.5*co); ctx.lineTo(p.x + 2.2*co - 0.7*si, p.y + 2.2*si + 0.7*co); ctx.closePath(); ctx.fill(); }
+}
+
+// ---------- 3D objects for the driver's seat and the mirrors ----------
+function shadeHex(hex, k){ const n = parseInt(hex.slice(1), 16), r = Math.min(255, ((n>>16)&255)*k)|0, g = Math.min(255, ((n>>8)&255)*k)|0, b = Math.min(255, (n&255)*k)|0;
+  return `rgb(${r},${g},${b})`; }
+function drawObjects3D(cam, withTrees){
+  const fx = Math.cos(cam.hd), fy = Math.sin(cam.hd), sg = cam.flip ? -1 : 1, F = cam.F;
+  const pj = (x,y,h) => { const dx = x-cam.ex, dy = y-cam.ey, z = dx*fx + dy*fy; return [cam.ox + (-dx*fy + dy*fx)*sg/z*F, cam.oy + (cam.ez-h)/z*F, z]; };
+  const depth = (x,y) => (x-cam.ex)*fx + (y-cam.ey)*fy;
+  const onScr = (x,y) => { const z = depth(x,y); return z > 0.8 && z < 170 && Math.abs((-(x-cam.ex)*fy + (y-cam.ey)*fx)/z) < 1.9; };
+  const NK = night ? 0.38 : 1;
+  const items = [];
+  queueKerbs3D(items, cam, withTrees ? 45 : 25);
+  const quad = (pts, fill) => { const q = pts.map(p => pj(p[0],p[1],p[2])); if (q.some(p => p[2] < 0.25)) return; ctx.beginPath(); q.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1])); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+  const disc = (x,y,h,r,fill) => { const p = pj(x,y,h); if (p[2] < 0.25) return; ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(p[0], p[1], Math.max(0.6, r*F/p[2]), 0, 7); ctx.fill(); };
+  const pole = (x,y,h0,h1,w,fill) => { const a = pj(x,y,h0), b = pj(x,y,h1); if (a[2] < 0.25) return; const pw = Math.max(1, w*F/a[2]); ctx.fillStyle = fill; ctx.fillRect(a[0]-pw/2, b[1], pw, a[1]-b[1]); };
+  const glowAt = (x,y,h,r,col) => { const p = pj(x,y,h); if (p[2] < 0.25) return; const pr = Math.max(2, r*F/p[2]); const g = ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],pr); g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0],p[1],pr,0,7); ctx.fill(); ctx.restore(); };
+  // a box in an object's own frame (x forward, y right), faces culled by their outward normal
+  const box = (cx,cy,th, x0,x1, y0,y1, h0,h1, col) => {
+    const co = Math.cos(th), si = Math.sin(th), W = (lx,ly) => [cx + lx*co - ly*si, cy + lx*si + ly*co];
+    const faces = [[x1,'f'],[x0,'b'],[y0,'l'],[y1,'r']];
+    for (const [v, k] of faces){
+      let a, b, n;
+      if (k==='f'){ a = W(x1,y0); b = W(x1,y1); n = [co,si]; } else if (k==='b'){ a = W(x0,y1); b = W(x0,y0); n = [-co,-si]; }
+      else if (k==='l'){ a = W(x0,y0); b = W(x1,y0); n = [si,-co]; } else { a = W(x1,y1); b = W(x0,y1); n = [-si,co]; }
+      const mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2; if ((cam.ex-mx)*n[0] + (cam.ey-my)*n[1] <= 0) continue;
+      quad([[a[0],a[1],h0],[b[0],b[1],h0],[b[0],b[1],h1],[a[0],a[1],h1]], col[k]);
+    }
+    if (cam.ez > h1){ const p = [W(x0,y0),W(x1,y0),W(x1,y1),W(x0,y1)]; quad(p.map(q => [q[0],q[1],h1]), col.t); }
+  };
+  if (withTrees) for (const t of TREES){ if (!onScr(t[0],t[1])) continue; const z = depth(t[0],t[1]); items.push({z, f(){
+    const p = pj(t[0],t[1],0), s = F/z, sx = p[0], gy = p[1], r = t[2]*1.1*s;
+    ctx.globalAlpha = Math.max(0.25, 1 - Math.max(0, z-35)/200) * (night ? 0.35 : 1);
+    ctx.fillStyle = '#5b4632'; ctx.fillRect(sx - 0.18*s, gy - 2.6*s, 0.36*s, 2.6*s);
+    ctx.fillStyle = t[3] > 0.5 ? '#2f6d2c' : '#3a7c33'; ctx.beginPath(); ctx.arc(sx, gy - (2.4+t[2])*s, r, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.beginPath(); ctx.arc(sx - r*0.3, gy - (2.4+t[2])*s - r*0.3, r*0.45, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1; }}); }
+  if (ROAD){
+    // traffic lights
+    for (const sgl of ROAD.signals){ const [x,y] = sgl.head; if (!onScr(x,y)) continue; items.push({z: depth(x,y), f(){
+      const st = sigState(sgl.grp, TT), front = (cam.ex-x)*-sgl.dir[0] + (cam.ey-y)*-sgl.dir[1] > 0;
+      pole(x,y,0,2.2,0.12,night ? '#30343a' : '#5d636b');
+      const a = pj(x,y,3.1), b = pj(x,y,2.12), w = Math.max(4, 0.42*F/a[2]);
+      ctx.fillStyle = '#0d0e10'; rr(a[0]-w/2, a[1], w, b[1]-a[1], w*0.18); ctx.fill(); ctx.strokeStyle = '#f2c40f'; ctx.lineWidth = Math.max(1, w*0.08); ctx.stroke();
+      if (front) [['R',2.87],['A',2.61],['G',2.35]].forEach(([k,h]) => { disc(x,y,h,0.12, st===k ? SIGCOL[k] : '#26292e'); if (st===k) glowAt(x,y,h,0.75, k==='R' ? 'rgba(255,60,50,.75)' : k==='A' ? 'rgba(255,176,32,.75)' : 'rgba(47,224,122,.7)'); });
+    }}); }
+    // STOP signs
+    for (const sp of ROAD.stops){ const [x,y] = sp.sign; if (!onScr(x,y)) continue; items.push({z: depth(x,y), f(){
+      const front = (cam.ex-x)*-sp.dir[0] + (cam.ey-y)*-sp.dir[1] > 0;
+      pole(x,y,0,1.9,0.07,'#8b929c');
+      const p = pj(x,y,2.15), r = 0.36*F/p[2]; if (p[2] < 0.25) return;
+      ctx.save(); ctx.translate(p[0],p[1]); ctx.beginPath(); for (let i=0;i<8;i++){ const an = Math.PI/8 + i*Math.PI/4; ctx.lineTo(Math.cos(an)*r, Math.sin(an)*r); } ctx.closePath();
+      ctx.fillStyle = front ? shadeHex('#c4121c', NK) : '#7c8189'; ctx.fill();
+      if (front){ ctx.strokeStyle = night ? '#777' : '#fff'; ctx.lineWidth = Math.max(1, r*0.1); ctx.stroke();
+        if (r > 6){ ctx.fillStyle = night ? '#bbb' : '#fff'; ctx.font = `700 ${r*0.62}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, r*0.04); } }
+      ctx.restore();
+    }}); }
+    // zebra beacons
+    const bOn = Math.floor(TT*1.4) % 2 === 0;
+    for (const [x,y] of ROAD.zebra.beacons){ if (!onScr(x,y)) continue; items.push({z: depth(x,y), f(){
+      for (let h=0; h<2.5; h+=0.3) pole(x,y,h,Math.min(2.5,h+0.3),0.09, (h/0.3|0) % 2 ? '#f2f2f2' : '#1b1c1f');
+      disc(x,y,2.68,0.2, bOn ? '#ffb020' : '#7a5a1c'); if (bOn) glowAt(x,y,2.68,0.8,'rgba(255,176,32,.6)');
+    }}); }
+    // test-course signposts
+    if (SIGNPOSTS) for (const sp of SIGNPOSTS){ const [x,y] = sp.p; if (!onScr(x,y)) continue; items.push({z: depth(x,y), f(){
+      const p = pj(x,y,1.75), s = F/p[2]; if (p[2] < 0.25) return; const bw = 2.7*s, bh = 0.86*s;
+      for (const dx of [-1.0,1.0]){ const g0 = pj(x,y,0); ctx.fillStyle = '#8b929c'; ctx.fillRect(p[0] + dx*s - Math.max(1,0.05*s)/2, p[1], Math.max(1,0.05*s), g0[1]-p[1]); }
+      ctx.fillStyle = night ? '#0e2138' : '#16365c'; rr(p[0]-bw/2, p[1]-bh/2, bw, bh, bh*0.15); ctx.fill(); ctx.strokeStyle = '#f6c915'; ctx.lineWidth = Math.max(1, 0.04*s); ctx.stroke();
+      if (bh > 9){ const n = ORDER.indexOf(sp.k)+1, rc = bh*0.32;
+        ctx.fillStyle = '#f6c915'; ctx.beginPath(); ctx.arc(p[0]-bw/2+bh*0.45, p[1], rc, 0, 7); ctx.fill();
+        ctx.fillStyle = '#16181b'; ctx.font = `700 ${bh*0.48}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(n), p[0]-bw/2+bh*0.45, p[1]+bh*0.02);
+        ctx.fillStyle = '#fff'; ctx.font = `700 ${bh*0.42}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.textAlign = 'left'; ctx.fillText(NAMES[sp.k].toUpperCase(), p[0]-bw/2+bh*0.9, p[1]+bh*0.02, bw-bh*1.05); }
+    }}); }
+    if (trafficOn){
+      for (const pd of PEDS){ if (!onScr(pd.x,pd.y)) continue; items.push({z: depth(pd.x,pd.y), f(){
+        const g0 = pj(pd.x,pd.y,0), s = F/g0[2]; if (g0[2] < 0.25) return;
+        const sw = pd.st === 'cross' ? Math.sin(pd.walk*9)*0.12*s : 0, top = pj(pd.x,pd.y,1.45)[1], hip = pj(pd.x,pd.y,0.85)[1];
+        ctx.fillStyle = shadeHex('#2b2e35', NK); ctx.fillRect(g0[0]-0.17*s+sw, hip, 0.13*s, g0[1]-hip); ctx.fillRect(g0[0]+0.04*s-sw, hip, 0.13*s, g0[1]-hip);
+        ctx.fillStyle = shadeHex(pd.col, NK); rr(g0[0]-0.23*s, top, 0.46*s, hip-top+0.05*s, 0.08*s); ctx.fill();
+        disc(pd.x,pd.y,1.6,0.12, shadeHex('#d9a77f', NK)); disc(pd.x,pd.y,1.67,0.1, shadeHex('#2a1d15', NK));
+      }}); }
+      const blink = Math.floor(performance.now()/380) % 2 === 0;
+      for (const a of AIS){ const p = aiPose(a); if (!onScr(p.x,p.y) && !onScr(p.x+Math.cos(p.h)*2.2, p.y+Math.sin(p.h)*2.2) && !onScr(p.x-Math.cos(p.h)*2.2, p.y-Math.sin(p.h)*2.2)) continue;
+        items.push({z: depth(p.x,p.y), f(){
+          const c = a.col.c, co = Math.cos(p.h), si = Math.sin(p.h);
+          const body = {f: shadeHex(c, 0.82*NK), b: shadeHex(c, 0.78*NK), l: shadeHex(c, 0.95*NK), r: shadeHex(c, 0.95*NK), t: shadeHex(c, 1.12*NK)};
+          const glass = {f: shadeHex('#2a3a4c', NK), b: shadeHex('#26323f', NK), l: shadeHex('#2f4152', NK), r: shadeHex('#2f4152', NK), t: shadeHex(c, 1.05*NK)};
+          const W = (lx,ly) => [p.x + lx*co - ly*si, p.y + lx*si + ly*co];
+          const tyre = night ? '#0b0b0c' : '#141518';
+          // wheels peeking under the body
+          for (const lx of [1.35,-1.35]) for (const ly of [-0.86,0.86]){ const q = W(lx,ly); if (depth(q[0],q[1]) < 0.3) continue; const g = pj(q[0],q[1],0), s = F/g[2]; ctx.fillStyle = tyre; ctx.fillRect(g[0]-0.3*s, g[1]-0.55*s, 0.6*s, 0.55*s); }
+          box(p.x,p.y,p.h, -2.2,2.2, -0.875,0.875, 0.28,0.86, body);
+          box(p.x,p.y,p.h, -1.25,0.95, -0.78,0.78, 0.86,1.42, glass);
+          if (a.col.taxi) box(p.x,p.y,p.h, -0.45,0.05, -0.3,0.3, 1.42,1.6, {f:'#f4f4f4',b:'#f4f4f4',l:'#e2e2e2',r:'#e2e2e2',t:'#ffffff'});
+          const frontVis = (cam.ex-p.x)*co + (cam.ey-p.y)*si > 2.2, backVis = (cam.ex-p.x)*-co + (cam.ey-p.y)*-si > 2.2;
+          for (const ly of [-0.62,0.62]){
+            if (frontVis){ const q = W(2.2,ly); disc(q[0],q[1],0.68,0.13, night ? '#fffbe0' : '#f7f1cf'); if (night) glowAt(q[0],q[1],0.68,0.9,'rgba(255,250,220,.7)'); }
+            if (backVis){ const q = W(-2.2,ly); disc(q[0],q[1],0.72,0.12, a.brk ? '#ff3b30' : shadeHex('#a3202b', night ? 0.8 : 1)); if (night || a.brk) glowAt(q[0],q[1],0.72,0.6, a.brk ? 'rgba(255,50,40,.7)' : 'rgba(255,40,40,.35)'); }
+          }
+          if (a.blink && blink){ const ly = a.blink === 'L' ? -0.88 : 0.88; for (const lx of [2.15,-2.15]){ const q = W(lx,ly); disc(q[0],q[1],0.7,0.1,'#ffb020'); glowAt(q[0],q[1],0.7,0.5,'rgba(255,176,32,.65)'); } }
+        }}); }
+    }
+  }
+  items.sort((a,b) => b.z - a.z);
+  for (const it of items) it.f();
+}
+
+// ---------- screen card: what is on the road ahead ----------
+function drawRoadCard(x, y, w){
+  const r = roadAhead(); if (!r || S.status !== 'run') return;
+  const h = 54, dist = r.d > 20 ? Math.round(r.d/5)*5 : Math.round(r.d);
+  let title, msg, col;
+  if (r.k === 'light'){ title = `TRAFFIC LIGHT · ${dist} m`; col = SIGCOL[r.st];
+    msg = r.st === 'R' ? 'Red. Stop behind the white line' : r.st === 'A' ? 'Amber. Stop unless too close to stop' : 'Green. Go if the junction is clear'; }
+  else if (r.k === 'stop'){ title = `STOP SIGN · ${dist} m`; col = r.ok ? '#3fca8b' : '#ef4a4a';
+    msg = r.ok ? 'Stopped ✓ Go when the road is clear' : 'Full stop with your bumper at the line'; }
+  else { title = `ZEBRA CROSSING · ${dist} m`; col = r.ped === 'cross' ? '#ef4a4a' : r.ped === 'wait' ? '#f5a524' : '#eceef1';
+    msg = r.ped === 'cross' ? 'Pedestrian crossing. STOP and wait' : r.ped === 'wait' ? 'Pedestrian waiting. Be ready to stop' : 'Look out for pedestrians'; }
+  ctx.save(); ctx.fillStyle = 'rgba(17,20,24,.92)'; rr(x, y, w, h, 8); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+  // icon
+  const ix = x+8, iy = y+7;
+  if (r.k === 'light'){ ctx.fillStyle = '#0d0e10'; rr(ix+8, iy, 24, 40, 5); ctx.fill(); ctx.strokeStyle = '#f2c40f'; ctx.lineWidth = 1; ctx.stroke();
+    [['R',8],['A',20],['G',32]].forEach(([k,dy]) => { ctx.fillStyle = r.st===k ? SIGCOL[k] : '#2d3035'; ctx.beginPath(); ctx.arc(ix+20, iy+dy, 5, 0, 7); ctx.fill(); }); }
+  else if (r.k === 'stop'){ ctx.save(); ctx.translate(ix+20, iy+20); ctx.fillStyle = '#c4121c'; ctx.beginPath(); for (let i=0;i<8;i++){ const a = Math.PI/8 + i*Math.PI/4; ctx.lineTo(Math.cos(a)*19, Math.sin(a)*19); } ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = '700 12px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, 1); ctx.restore(); }
+  else { ctx.fillStyle = '#3c4047'; rr(ix, iy, 40, 40, 5); ctx.fill(); ctx.fillStyle = '#f4f4f2'; for (let i=0;i<5;i++) ctx.fillRect(ix+4, iy+4+i*7.4, 32, 3.6);
+    if (r.ped !== 'clear'){ ctx.fillStyle = '#e85d75'; ctx.beginPath(); ctx.arc(ix+20, iy+20, 6, 0, 7); ctx.fill(); } }
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f6c915'; ctx.font = '700 12px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText(title, x+58, y+17, w-66);
+  ctx.fillStyle = col === '#eceef1' ? '#eceef1' : col; ctx.font = '700 16px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText(msg, x+58, y+37, w-66);
+  ctx.restore();
+}
+function drawMiniTraffic(mx, my){
+  if (!ROAD) return;
+  for (const sg of ROAD.signals){ const st = sigState(sg.grp, TT); ctx.fillStyle = SIGCOL[st]; ctx.beginPath(); ctx.arc(mx+sg.head[0]*MM, my+sg.head[1]*MM, 2.4, 0, 7); ctx.fill(); }
+  if (!trafficOn) return;
+  for (const a of AIS){ const p = aiPose(a); ctx.save(); ctx.translate(mx+p.x*MM, my+p.y*MM); ctx.rotate(p.h); ctx.fillStyle = a.col.c; ctx.strokeStyle = '#111'; ctx.lineWidth = 0.8; ctx.fillRect(-3.2,-1.5,6.4,3); ctx.strokeRect(-3.2,-1.5,6.4,3); ctx.restore(); }
+  for (const p of PEDS){ ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(mx+p.x*MM, my+p.y*MM, 1.8, 0, 7); ctx.fill(); }
+}
+function setTrafBtn(){ const b = document.getElementById('trafBtn'); if (!b) return; b.hidden = !ROAD; b.textContent = trafficOn ? '🚗 Traffic' : '🚗 No traffic';
+  b.setAttribute('aria-pressed', String(trafficOn)); b.title = (trafficOn ? 'Turn other cars and people off' : 'Turn other cars and people on') + ' (T)'; b.style.opacity = trafficOn ? '1' : '.6';
+  const k = document.getElementById('mapKey'); if (k) k.hidden = !ROAD; const rrl = document.getElementById('roadRules'); if (rrl) rrl.hidden = !ROAD; }
+function toggleTraffic(){ if (!ROAD) return; trafficOn = !trafficOn; try { localStorage.setItem('tp-traffic', trafficOn ? '1' : '0'); } catch(e) {}
+  setTrafBtn(); if (trafficOn) resetTraffic(); flash(trafficOn ? 'Traffic on: other cars and pedestrians' : 'Traffic off. Lights and STOP lines still apply', 'info', 1800); }
+
+// ---------- Beginner guide (driver's seat only, off by default): when to get ready, where to stop, when it's too close ----------
+let beginner = false; try { beginner = localStorage.getItem('tp-beginner') === '1'; } catch(e) {}
+let BG_CUE = null, BG_SENS = Infinity, BG_PEND = null, BG_PEND_T = 0, BG_GONE = 0, BG_ALPHA = 0, BG_DSM = null;
+// steady the card: a new message must last 0.3 s before it replaces the old one (BRAKE and over-the-line show at once),
+// a cue that ends lingers 0.6 s and fades, and the distance readout glides instead of ticking
+const bgKey = c => c ? c.type + '|' + c.state + '|' + c.msg : '';
+function bgUpdate(dt){
+  const shown = BG_CUE; bgRaw(); const raw = BG_CUE; BG_CUE = shown;
+  dt = dt || 1/60;
+  if (!beginner || S.status !== 'run'){ BG_CUE = null; BG_ALPHA = 0; BG_DSM = null; return; }
+  if (raw){
+    BG_GONE = 0;
+    const urgent = raw.state === 'brake' || raw.state === 'over';
+    if (!BG_CUE || bgKey(raw) === bgKey(BG_CUE) || urgent){ BG_CUE = raw; BG_PEND = null; }
+    else {
+      if (BG_PEND && bgKey(BG_PEND) === bgKey(raw)) BG_PEND_T += dt; else { BG_PEND = raw; BG_PEND_T = 0; }
+      if (BG_PEND_T > 0.3){ BG_CUE = raw; BG_PEND = null; }
+      else if (BG_CUE.type === raw.type){ BG_CUE.d = raw.d; BG_CUE.need = raw.need; BG_CUE.line = raw.line; BG_CUE.t = raw.t; }
+    }
+    BG_CUE.turnMark = raw.turnMark; BG_CUE.stopMark = raw.stopMark;
+  } else if (BG_CUE){ BG_GONE += dt; if (BG_GONE > 0.6){ BG_CUE.turnMark = null; BG_CUE.stopMark = null; } }
+  const want = BG_CUE && BG_GONE <= 0.6 ? 1 : 0;
+  BG_ALPHA += (want - BG_ALPHA) * Math.min(1, dt*9);
+  if (!want && BG_ALPHA < 0.03){ BG_CUE = null; BG_DSM = null; }
+  if (BG_CUE && BG_CUE.d != null) BG_DSM = BG_DSM == null || Math.abs(BG_DSM - BG_CUE.d) > 6 ? BG_CUE.d : BG_DSM + (BG_CUE.d - BG_DSM)*Math.min(1, dt*8);
+}
+function bgSensor(){ // rays from the rear bumper (backwards) and rear corners (sideways), up to 1.5 m
+  const c = S.car, rays = [];
+  for (const ly of [-HALF+0.05, -HALF/2, 0, HALF/2, HALF-0.05]) rays.push([-REAR, ly, -1, 0]);
+  for (const s of [-1, 1]) for (const lx of [-REAR+0.15, 0.4]) rays.push([lx, s*HALF, 0, s]);
+  let best = Infinity;
+  for (const [lx,ly,dx,dy] of rays) for (let d=0.02; d<=1.5 && d<best; d+=0.04){ const p = toWorld(c, lx+dx*d, ly+dy*d); if (sample(p.x,p.y) < 2){ best = d; break; } }
+  return best;
+}
+const BG_DECEL = 3.5;   // comfortable braking, m/s²
+function bgStopTargets(){
+  const c = S.car, f = toWorld(c, FRONT, 0), out = [];
+  if (c.gear === 'R' || c.v < -0.1) return out;
+  const add = (a, b, dir, label, kind) => { const li = lineInfo({a,b,dir}, f), al = alignOf(c.th, dir);
+    if (al > 0.6 && li.lat < li.half + 1.2 && li.along > -30 && li.along < 1.2) out.push({a, b, dir, d: -li.along, label, kind}); };
+  if (ROAD){
+    ROAD.signals.forEach(sg => { const st = sigState(sg.grp, TT); if (st !== 'G') add(sg.a, sg.b, sg.dir, st === 'R' ? 'Red light ahead' : 'Amber light ahead', 'sig'); });
+    ROAD.stops.forEach((sp,j) => { if (!S.road.stop[j].ok) add(sp.a, sp.b, sp.dir, 'STOP sign ahead', 'stop'); });
+    if (trafficOn && PEDS.some(p => p.st === 'cross' || p.t < 3)){ const z = ROAD.zebra, ym = (z.y0+z.y1)/2;
+      add([z.x0-1, z.y0], [z.x0-1, ym], [1,0], 'Pedestrian at the zebra', 'zebra'); add([z.x1+1, ym], [z.x1+1, z.y1], [-1,0], 'Pedestrian at the zebra', 'zebra'); }
+  }
+  if (nextTask() === 'slope' && !S.slope.valid && !S.done.slope){ const [sx,,sw] = SLOPE_RECT; add([sx, STOP_LINE_Y], [sx+sw, STOP_LINE_Y], [0,-1], 'Slope: front bumper on the yellow line', 'slope'); }
+  return out.sort((p,q) => p.d - q.d);
+}
+function bgTurn(){
+  if (!ROUTE || !S.guide.key || S.guide.off) return null;
+  const g = S.guide, leg = ROUTE[g.key], w = leg[g.idx]; if (!w || !w.say || !/turn (left|right)/i.test(w.say) || g.dist > 35) return null;
+  const nx = leg[g.idx+1] ? leg[g.idx+1].p : null, pv = leg[g.idx-1] ? leg[g.idx-1].p : null;
+  let ox, oy; if (nx){ ox = nx[0]-w.p[0]; oy = nx[1]-w.p[1]; } else if (pv){ const ix = w.p[0]-pv[0], iy = w.p[1]-pv[1]; const L1 = /turn left/i.test(w.say); ox = L1 ? iy : -iy; oy = L1 ? -ix : ix; } else return null;
+  const l = Math.hypot(ox, oy) || 1;
+  return {dir: /turn left/i.test(w.say) ? 'L' : 'R', d: g.dist, p: w.p, o: [ox/l, oy/l]};
+}
+function bgRaw(){
+  BG_CUE = null; BG_SENS = Infinity; if (!beginner || S.status !== 'run') return;
+  if (S.car.gear === 'R'){
+    BG_SENS = bgSensor();
+    if (BG_SENS < 1.5){ const d = BG_SENS;
+      BG_CUE = {type:'park', state: d < 0.35 ? 'brake' : d < 0.8 ? 'prepare' : 'ahead', d, title:'Parking sensor: kerb behind',
+        msg: d < 0.35 ? 'STOP. Very close to the kerb' : d < 0.8 ? 'Close. Inch back slowly' : 'Kerb behind. Reverse slowly'}; return; }
+  }
+  const c = S.car, v = Math.max(0, c.v), kmh = v*3.6, need = v*v/(2*BG_DECEL);
+  const st = bgStopTargets()[0];
+  let stop = null;
+  if (st){
+    const slope = st.kind === 'slope', aim = slope ? 0.3 : 1.0, lo = slope ? -0.6 : -0.15, hi = slope ? 3.3 : 4;
+    let state;
+    if (v < 0.12) state = st.d < lo ? 'over' : st.d <= hi ? 'good' : 'early';
+    else if (st.d < lo) state = 'over';
+    else if (st.d - aim <= need + 0.4) state = 'brake';
+    else if (st.d - aim <= need + 7 || (!slope && st.d < 18)) state = 'prepare';
+    else state = 'ahead';
+    const msg = { over: slope ? 'Past the yellow line. Reverse a little' : 'Over the line. Stop behind it next time',
+      good: slope ? 'Good stop ✓ Handbrake, then move off' : st.kind === 'stop' ? 'Good stop ✓ Look right, left, right' : st.kind === 'zebra' ? 'Good stop ✓ Wait until they reach the kerb' : 'Good stop ✓ Wait here',
+      early: 'Stopped early. Creep forward slowly', brake: 'BRAKE NOW', prepare: slope ? 'Ease off and get ready to stop' : st.kind === 'zebra' ? 'Slow down. Be ready to stop for them' : 'Get ready to stop behind the white line', ahead: st.label }[state];
+    stop = {type:'stop', state, d: st.d, title: st.label, msg, line: st, need};
+  }
+  const tn = bgTurn();
+  let turn = null;
+  if (tn){
+    const side = tn.dir === 'L' ? 'left' : 'right', keySig = tn.dir === 'L' ? 'Z' : 'X', keyChk = tn.dir === 'L' ? 'Q' : 'E';
+    const signalled = S.signal === tn.dir, checked = S.t - S.lastCheck[tn.dir] < 6;
+    let msg, state;
+    if (tn.d > 20){ msg = kmh > 15 ? 'Ease off. Turn coming up' : 'Get ready to turn'; state = 'ahead'; }
+    else if (!signalled){ msg = `Signal ${side} now (${keySig})`; state = 'prepare'; }
+    else if (!checked){ msg = `Check ${side} blind spot (hold ${keyChk})`; state = 'prepare'; }
+    else { msg = kmh > 12 ? 'Slow down for the turn' : 'Ready ✓ Turn at the arrows'; state = kmh > 12 ? 'prepare' : 'good'; }
+    turn = {type:'turn', state, d: tn.d, title: `Turn ${side} ahead`, msg, t: tn};
+  }
+  let course = null;
+  const m = mid(c), nk = nextTask();
+  if (kmh > 6 && ((nk === 'crank' && CRANK.some(r => inRect(m, r))) || (nk === 's' && nearS(m))))
+    course = {type:'speed', state:'prepare', d: null, title: NAMES[nk], msg: 'Walking pace: stay under 5 km/h'};
+  const urgent = s => s && (s.state === 'brake' || s.state === 'over' || s.state === 'prepare' || s.state === 'good' || s.state === 'early');
+  BG_CUE = urgent(stop) ? stop : course || turn || stop;
+  if (BG_CUE) BG_CUE.turnMark = turn ? turn.t : null, BG_CUE.stopMark = stop ? stop : null;
+}
+const BG_COL = {ahead:'#9fb4c8', prepare:'#f5a524', brake:'#ef4a4a', over:'#ef4a4a', good:'#3fca8b', early:'#62ccff'};
+// ground marks in the driver's view: the line to stop at, a stop box behind it, and chevrons at the next turn
+function drawBeginnerGround(cam){
+  if (!BG_CUE) return;
+  const fx = Math.cos(cam.hd), fy = Math.sin(cam.hd), F = cam.F, now = performance.now();
+  const pj = (x,y) => { const dx = x-cam.ex, dy = y-cam.ey, z = dx*fx + dy*fy; return [cam.ox + (-dx*fy + dy*fx)/z*F, cam.oy + (cam.ez - heightAt(x,y))/z*F, z]; };
+  const quad = (pts, fill) => { const q = pts.map(p => pj(p[0], p[1])); if (q.some(p => p[2] < 0.6)) return; ctx.beginPath(); q.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1])); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+  ctx.save();
+  const sm = BG_CUE.stopMark;
+  if (sm && sm.line){
+    const L = sm.line, col = BG_COL[sm.state], flash = ((sm.state === 'brake' || sm.state === 'over') ? 0.45 + 0.3*Math.sin(now/1000*2*Math.PI*2) : 0.6) * BG_ALPHA;
+    const [ax,ay] = L.a, [bx,by] = L.b, dx = -L.dir[0], dy = -L.dir[1];
+    ctx.globalAlpha = flash; quad([[ax,ay],[bx,by],[bx+dx*0.45,by+dy*0.45],[ax+dx*0.45,ay+dy*0.45]], col);
+    // the stop box: where your front bumper should come to rest
+    const back = sm.line.kind === 'slope' ? 1.2 : 3;
+    ctx.globalAlpha = 0.16*BG_ALPHA; quad([[ax+dx*0.45,ay+dy*0.45],[bx+dx*0.45,by+dy*0.45],[bx+dx*back,by+dy*back],[ax+dx*back,ay+dy*back]], col);
+  }
+  const tm = BG_CUE.turnMark;
+  if (tm){
+    const [px,py] = tm.p, [ox,oy] = tm.o, nx = -oy, ny = ox, pulse = 0.45 + 0.3*Math.sin(now/220);
+    for (let i=0;i<3;i++){
+      const cx = px + ox*(0.8 + i*1.4), cy = py + oy*(0.8 + i*1.4);
+      ctx.globalAlpha = pulse * (1 - i*0.18) * BG_ALPHA;
+      const tip = [cx + ox*0.6, cy + oy*0.6], l = [cx - ox*0.3 + nx*0.9, cy - oy*0.3 + ny*0.9], r = [cx - ox*0.3 - nx*0.9, cy - oy*0.3 - ny*0.9];
+      const t2 = [tip[0]-ox*0.45, tip[1]-oy*0.45], l2 = [l[0]-ox*0.45, l[1]-oy*0.45], r2 = [r[0]-ox*0.45, r[1]-oy*0.45];
+      quad([l, tip, t2, l2], '#00e5ff'); quad([tip, r, r2, t2], '#00e5ff');
+    }
+  }
+  ctx.restore();
+}
+// one small cue card just above the bonnet; it only appears when there is something to do
+function drawBeginnerHud(yTop){
+  if (!BG_CUE) return;
+  const cue = BG_CUE, col = BG_COL[cue.state], now = performance.now();
+  const urgent = cue.state === 'brake' || cue.state === 'over', pulse = 0.5 + 0.5*Math.sin(now/1000*2*Math.PI*2);
+  const w = Math.min(360, cw - 40), h = 48, x = Math.round(cw/2 - w/2), y = Math.round(yTop);
+  ctx.save();
+  ctx.globalAlpha = (cue.state === 'ahead' ? 0.8 : 0.95) * BG_ALPHA;
+  ctx.fillStyle = 'rgba(17,20,24,.9)'; rr(x, y, w, h, 10); ctx.fill();
+  if (urgent){ ctx.fillStyle = `rgba(150,22,30,${0.35 + 0.45*pulse})`; rr(x, y, w, h, 10); ctx.fill(); }
+  ctx.strokeStyle = col; ctx.lineWidth = urgent ? 2.5 : 1.5; ctx.stroke();
+  // icon
+  const ix = x + 24, iy = y + h/2;
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(ix, iy, 14, 0, 7); ctx.fill();
+  ctx.fillStyle = '#0b0c0e'; ctx.font = '700 17px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(cue.type === 'turn' ? (cue.t.dir === 'L' ? '←' : '→') : cue.type === 'park' ? '↓' : cue.type === 'speed' ? '🐢' : cue.state === 'good' ? '✓' : urgent ? '!' : '■', ix, iy + 1);
+  // text
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#aab4c0'; ctx.font = '700 11px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText(cue.title.toUpperCase(), x + 46, y + 14, w - 110);
+  ctx.fillStyle = urgent ? '#ffffff' : col === BG_COL.ahead ? '#eceef1' : col; ctx.font = `700 ${urgent ? 19 : 17}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.fillText(cue.msg, x + 46, y + 32, w - 110);
+  // distance and stopping gauge
+  if (cue.d != null){
+    const dd = Math.max(0, BG_DSM == null ? cue.d : BG_DSM), txt = cue.type === 'park' ? Math.round(dd*100) + ' cm' : dd > 20 ? Math.round(dd/5)*5 + ' m' : dd.toFixed(dd < 3 ? 1 : 0) + ' m';
+    ctx.textAlign = 'right'; ctx.fillStyle = '#eceef1'; ctx.font = '700 20px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText(txt, x + w - 12, y + 25);
+    if (cue.type === 'stop'){
+      const gx = x + 46, gw = w - 58, gy = y + h - 7, span = 25;
+      ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(gx, gy, gw, 3);
+      ctx.fillStyle = col; ctx.fillRect(gx, gy, gw * Math.max(0, Math.min(1, 1 - dd/span)), 3);
+      const nd = Math.min(span, cue.need); ctx.fillStyle = '#ffffff'; ctx.fillRect(gx + gw*(1 - nd/span) - 1, gy - 3, 2, 9);   // where you'd stop if you braked now
+    }
+  }
+  ctx.restore();
+}
+function setBgBtn(){ const b = document.getElementById('bgBtn'); if (!b) return; b.textContent = beginner ? '🎓 Guide on' : '🎓 Guide'; b.setAttribute('aria-pressed', String(beginner));
+  b.title = (beginner ? 'Turn the beginner guide off' : 'Turn the beginner guide on') + ' (G)'; b.style.borderColor = beginner ? 'var(--accent)' : ''; }
+function toggleBeginner(){ beginner = !beginner; try { localStorage.setItem('tp-beginner', beginner ? '1' : '0'); } catch(e) {} setBgBtn();
+  flash(beginner ? (driverView ? 'Beginner guide on' : "Beginner guide on. It shows in the driver's seat view (C)") : 'Beginner guide off', 'info', 2200); }
+
+// ---------- 3D kerbs: traced from the collision mask so they match exactly what you can hit, on both maps ----------
+// Each kerb is drawn 15 cm high in the driver's seat and mirrors (a vertical face plus a raised top), in alternating
+// yellow and black blocks, and casts a soft shadow onto the road in every view.
+const KERB_H = 0.15, KERB_BLOCK = 0.9;
+let KERBS = [];   // pieces: {x1,y1,x2,y2,mx,my,nx,ny (towards the kerb), c (0 yellow, 1 black)}
+function buildKerb3D(){
+  const g = 0.25, nx0 = Math.ceil(WW/g) + 4, ny0 = Math.ceil(WH/g) + 4, ox = -2*g, oy = -2*g;
+  const A = new Uint8Array(nx0*ny0);
+  for (let j=0;j<ny0;j++) for (let i=0;i<nx0;i++) A[j*nx0+i] = sample(ox+i*g, oy+j*g) === 2 ? 1 : 0;
+  // marching squares on the "is road" field: one boundary segment per mixed cell
+  const segs = [];
+  const P = (i, j) => [ox + i*g, oy + j*g];
+  for (let j=0;j<ny0-1;j++) for (let i=0;i<nx0-1;i++){
+    const a = A[j*nx0+i], b = A[j*nx0+i+1], c = A[(j+1)*nx0+i+1], d = A[(j+1)*nx0+i];
+    const code = a | b<<1 | c<<2 | d<<3; if (code === 0 || code === 15) continue;
+    const T = P(i+0.5, j), R = P(i+1, j+0.5), B = P(i+0.5, j+1), Lf = P(i, j+0.5);
+    const map = {1:[[Lf,T]],2:[[T,R]],3:[[Lf,R]],4:[[R,B]],5:[[Lf,T],[R,B]],6:[[T,B]],7:[[Lf,B]],8:[[B,Lf]],9:[[B,T]],10:[[T,R],[B,Lf]],11:[[B,R]],12:[[R,Lf]],13:[[R,T]],14:[[T,Lf]]};
+    for (const s of map[code]) segs.push(s);
+  }
+  // chain the tiny segments into polylines, then straighten them
+  const key = p => Math.round(p[0]*1000) + ',' + Math.round(p[1]*1000);
+  const ends = new Map(); segs.forEach((s,k) => { for (const e of [0,1]){ const kk = key(s[e]); if (!ends.has(kk)) ends.set(kk, []); ends.get(kk).push(k); } });
+  const used = new Uint8Array(segs.length), lines = [];
+  for (let k=0;k<segs.length;k++){
+    if (used[k]) continue; used[k] = 1; const line = [segs[k][0], segs[k][1]];
+    for (const dir of [1, 0]){
+      for (;;){
+        const tip = dir ? line[line.length-1] : line[0], cand = (ends.get(key(tip)) || []).find(m => !used[m]); if (cand === undefined) break;
+        used[cand] = 1; const s = segs[cand], nxt = key(s[0]) === key(tip) ? s[1] : s[0];
+        if (dir) line.push(nxt); else line.unshift(nxt);
+      }
+    }
+    lines.push(line);
+  }
+  const simplify = (pts, tol) => { if (pts.length < 3) return pts; const [a, b] = [pts[0], pts[pts.length-1]]; let dm = 0, im = 0;
+    const dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx,dy) || 1e-9;
+    for (let i=1;i<pts.length-1;i++){ const d = l < 1e-6 ? Math.hypot(pts[i][0]-a[0], pts[i][1]-a[1]) : Math.abs((pts[i][0]-a[0])*dy - (pts[i][1]-a[1])*dx)/l; if (d > dm){ dm = d; im = i; } }
+    if (dm <= tol) return [a, b]; const L1 = simplify(pts.slice(0, im+1), tol), L2 = simplify(pts.slice(im), tol); return L1.slice(0,-1).concat(L2); };
+  KERBS = [];
+  for (const raw of lines){
+    if (raw.length < 3) continue;
+    const pts = simplify(raw, 0.05); let acc = 0;
+    for (let i=1;i<pts.length;i++){
+      const [x1,y1] = pts[i-1], [x2,y2] = pts[i], L = Math.hypot(x2-x1, y2-y1); if (L < 1e-3) continue;
+      const n = Math.max(1, Math.ceil(L/KERB_BLOCK));
+      for (let k=0;k<n;k++){
+        const ax = x1+(x2-x1)*k/n, ay = y1+(y2-y1)*k/n, bx = x1+(x2-x1)*(k+1)/n, by = y1+(y2-y1)*(k+1)/n, mx = (ax+bx)/2, my = (ay+by)/2;
+        let nx = -(by-ay), ny = bx-ax; const nl = Math.hypot(nx,ny) || 1; nx /= nl; ny /= nl;
+        if (sample(mx+nx*0.3, my+ny*0.3) === 2){ nx = -nx; ny = -ny; }        // normal points into the kerb
+        if (sample(mx-nx*0.3, my-ny*0.3) !== 2) continue;                       // keep only road-facing edges
+        KERBS.push({x1:ax, y1:ay, x2:bx, y2:by, mx, my, nx, ny, c: Math.floor((acc + L*(k+0.5)/n)/KERB_BLOCK) % 2});
+      }
+      acc += L;
+    }
+  }
+}
+// soft contact shadow on the road and a light top edge, painted into the ground so every view gets it
+function drawKerbShade(){
+  ctx.save(); ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(0,0,0,.32)'; ctx.lineWidth = 0.28; ctx.beginPath();
+  for (const k of KERBS){ ctx.moveTo(k.x1 - k.nx*0.14, k.y1 - k.ny*0.14); ctx.lineTo(k.x2 - k.nx*0.14, k.y2 - k.ny*0.14); } ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 0.07; ctx.beginPath();
+  for (const k of KERBS){ ctx.moveTo(k.x1 + k.nx*0.04, k.y1 + k.ny*0.04); ctx.lineTo(k.x2 + k.nx*0.04, k.y2 + k.ny*0.04); } ctx.stroke();
+  ctx.restore();
+}
+// kerb base height: on the slope ramp the kerbs beside the lane ride up with it
+function kerbBase(x, y){ if (!SLOPE_RECT) return 0; const [x0,,w] = SLOPE_RECT; return heightAt(Math.min(x0+w, Math.max(x0, x)), y) * (x > x0-1.3 && x < x0+w+1.3 ? 1 : 0); }
+// queue the kerb pieces near the camera into a depth-sorted list; quads are clipped at the near plane
+function queueKerbs3D(items, cam, maxD){
+  const fx = Math.cos(cam.hd), fy = Math.sin(cam.hd), sg = cam.flip ? -1 : 1, F = cam.F, NEAR = 0.3;
+  const cs = (x,y,h) => { const dx = x-cam.ex, dy = y-cam.ey; return [(-dx*fy + dy*fx)*sg, dx*fx + dy*fy, h]; };   // [right, forward, height]
+  const draw = (poly, fill) => {
+    const out = [];
+    for (let i=0;i<poly.length;i++){ const a = poly[i], b = poly[(i+1)%poly.length], ia = a[1] >= NEAR, ib = b[1] >= NEAR;
+      if (ia) out.push(a); if (ia !== ib){ const t = (NEAR - a[1])/(b[1] - a[1]); out.push([a[0]+(b[0]-a[0])*t, NEAR, a[2]+(b[2]-a[2])*t]); } }
+    if (out.length < 3) return;
+    ctx.beginPath(); out.forEach((p,i) => { const X = cam.ox + p[0]/p[1]*F, Y = cam.oy + (cam.ez - p[2])/p[1]*F; i ? ctx.lineTo(X,Y) : ctx.moveTo(X,Y); });
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+  };
+  const NK = night ? 0.4 : 1, C = [[shadeHex('#e7b80d', 0.82*NK), shadeHex('#f4c514', NK)], [shadeHex('#1d1e21', NK), shadeHex('#2a2b2f', NK)]];
+  const md2 = maxD*maxD;
+  for (const k of KERBS){
+    const dx = k.mx - cam.ex, dy = k.my - cam.ey; if (dx*dx + dy*dy > md2) continue;
+    if ((cam.ex - k.mx)*(-k.nx) + (cam.ey - k.my)*(-k.ny) <= 0) continue;          // only faces turned towards the road you're on
+    const z = dx*fx + dy*fy; if (z < -1.5) continue;
+    items.push({z: Math.max(0.1, z), f(){
+      const h0a = kerbBase(k.x1,k.y1), h0b = kerbBase(k.x2,k.y2), h1a = h0a + KERB_H, h1b = h0b + KERB_H, cl = C[k.c];
+      draw([cs(k.x1,k.y1,h0a), cs(k.x2,k.y2,h0b), cs(k.x2,k.y2,h1b), cs(k.x1,k.y1,h1a)], cl[0]);
+      if (cam.ez > h1a) draw([cs(k.x1,k.y1,h1a), cs(k.x2,k.y2,h1b), cs(k.x2+k.nx*K,k.y2+k.ny*K,h1b), cs(k.x1+k.nx*K,k.y1+k.ny*K,h1a)], cl[1]);
+    }});
+  }
 }
 
 const MAPS = {
@@ -355,7 +1125,7 @@ const MAPS = {
       TARGETS = {crank:[26,96], s:[112,96], slope:[150.5,92], turn:[122.7,14], par:[73.7,14], ver:[14,29.3]};
       APPROACH = {crank:[12,98.75,0], s:[92,98.75,0], slope:[148.75,99,-Math.PI/2], turn:[140,11.25,Math.PI], par:[95,11.25,Math.PI], ver:[11.25,14,Math.PI/2]};
       START = [9,98.75,0];
-      ORDER = ['crank','s','slope','turn','par','ver']; ROUTE = null; STN = null; MAP_TIPS = {}; WHERE = null; MARK = null;
+      ORDER = ['crank','s','slope','turn','par','ver']; ROUTE = null; STN = null; MAP_TIPS = {}; WHERE = null; MARK = null; ROAD = null; COURSES = null; SIGNPOSTS = null;
     },
     trees: {count:70, rmin:1.2, rspan:1.3, margin:1.6, avoid:[[56,64,38,26],[40,24,64,18]]},
     paint(g, kerb, asph){ drawKerbs(g,kerb); drawAsphalt(g,asph); },
@@ -442,15 +1212,45 @@ const MAPS = {
       const W = (x,y,say) => ({p:[x,y], say});
       ROUTE = {
         slope: [W(8,108.2), W(33.5,108.2,'Turn left into the slope lane'), W(33.6,74.1,'Stop with your front bumper on the yellow line')],
-        s:     [W(33.6,61), W(33.6,48,'Turn right onto the middle road'), W(89,48,'Turn left onto the centre road'), W(89,29.5,'Turn left towards the S-course'),
+        s:     [W(33.6,61), W(33.6,48,'Turn right onto the middle road'), W(89,48,'At the traffic light, turn left onto the centre road'), W(89,29.5,'Turn left towards the S-course'),
                 W(72.3,29.5,'Turn left into the S-course'), W(72.3,33,'Keep centred, small steady steering')],
-        ver:   [W(32.3,44), W(32.3,48,'Turn left onto the middle road'), W(89,48,'Turn left onto the centre road'), W(89,29.5,'Turn left, then stop just past bay 24'),
+        ver:   [W(32.3,44), W(32.3,48,'STOP at the line, then turn left onto the middle road'), W(89,48,'At the traffic light, turn left onto the centre road'), W(89,29.5,'Turn left, then stop just past bay 24'),
                 W(57,29.5,'Check right (E), reverse into bay 24 on your right')],
         crank: [W(61.5,24.5), W(61.5,25.8,'Turn left, go straight across the centre road'), W(100.3,23,'Keep left past the parking lots'),
                 W(105.5,23,'Turn right into the crank course'), W(105.5,28,'Walking pace, turn late at each corner')],
-        turn:  [W(115,44), W(115,48,'Turn left onto the middle road'), W(162.5,48,'Turn left onto the right-hand road'), W(162.5,25,'Turn left towards the T-pocket'),
+        turn:  [W(115,44), W(115,48,'STOP at the line, then turn left onto the middle road'), W(162.5,48,'Turn left onto the right-hand road'), W(162.5,25,'Turn left towards the T-pocket'),
                 W(132,25,'Turn left into the directional change pocket'), W(132,29,'Drive in, reverse into one arm, drive out')],
         par:   [W(132,27), W(132,22.6,'Turn right, then stop just past lot 37'), W(140,22.6,'Check left (Q), reverse into lot 37 on your left')]
+      };
+      // test areas: tint, name plates (x, y, text size) and roadside signposts for the driver's seat
+      COURSES = {
+        slope: {rects:[SLOPE_RECT], plate:[17.4,82.5,1.5]},
+        s:     {path:true, plate:[17.2,36.4,1.35]},
+        ver:   {rects:[[71.25,18.2,2.7,5.6],[60.15,18.2,2.7,5.6],[52.65,18.2,2.7,5.6]], target:VER_LOT, tlabel:'YOUR BAY', plate:[29.4,20.5,1.1]},
+        crank: {rects:CRANK, plate:[104.3,38.6,1.15]},
+        turn:  {rects:[[129.5,27.2,5,8.3],[122,35.5,20,5]], plate:[143,38.4,0.95]},
+        par:   {rects:[107.65,116.15,125.15,133.65,142.45].map(x => [x,17.9,7.5,2.6]), target:PAR_LOT, tlabel:'YOUR LOT', plate:[147.8,16.45,0.82]}
+      };
+      SIGNPOSTS = [{k:'slope',p:[28.4,92]},{k:'s',p:[77,33.8]},{k:'ver',p:[67,21.2]},{k:'crank',p:[101.9,30.6]},{k:'turn',p:[138,30.2]},{k:'par',p:[124.4,16.45]}];
+      // road features: signalised centre junction, zebra on the middle road, STOP lines at three course exits, two traffic loops (keep left)
+      ROAD = {
+        signals: [
+          {grp:'EW', a:[84.6,44.5], b:[84.6,51.5], dir:[1,0],  head:[83.6,43.4]},
+          {grp:'EW', a:[100.8,51.5], b:[100.8,58.9], dir:[-1,0], head:[102.3,60.3]},
+          {grp:'NS', a:[85,59.8], b:[92.65,59.8], dir:[0,-1], head:[84.0,60.7]},
+          {grp:'NS', a:[92.65,44.0], b:[100.3,44.0], dir:[0,1], head:[101.3,43.3]}
+        ],
+        zebra: {x0:48.4, x1:51.9, y0:44.5, y1:59.4, wait:{N:[50.15,43.3], S:[50.15,61.1]}, beacons:[[52.7,43.6],[50.55,62.9]],
+                zig:[[38.6,47.8],[52.5,61.8]], zigY:[45.05,51.5]},
+        stops: [
+          {a:[30.0,44.2], b:[34.6,44.2], dir:[0,1],  sign:[35.7,42.9]},
+          {a:[113,44.2],  b:[117,44.2],  dir:[0,1],  sign:[118.1,42.9]}
+        ],
+        loops: [{pts:[[89,108.2],[89,11.5],[11.4,11.5],[11.4,108.2]], cars:2}, {pts:[[11.4,48],[162.5,48],[162.5,11.5],[11.4,11.5]], cars:1}],
+        arrows: [[22,108.2,0],[62,108.2,0],[52,113.3,Math.PI],[118,113.3,Math.PI],[22,48,0],[78.5,48,0],[132,48,0],[142,55,Math.PI],[70,55,Math.PI],[24,55,Math.PI],
+                 [88.8,82,-Math.PI/2],[88.8,38,-Math.PI/2],[96.5,36,Math.PI/2],[96.5,80,Math.PI/2],[60,11.5,Math.PI],[130,11.5,Math.PI],[40,5,0],[110,5,0],
+                 [11.4,30,Math.PI/2],[11.4,82,Math.PI/2],[5.1,70,-Math.PI/2],[5.1,30,-Math.PI/2],[162.5,36,-Math.PI/2],[167,30,Math.PI/2]],
+        solid: [[92.65,34,92.65,44.0],[92.65,59.8,92.65,70],[74,51.5,84.6,51.5],[100.8,51.5,111,51.5]]
       };
       MAP_TIPS = { ver: 'Drive west past bay 24 and stop. The bay is on your right, so tap E, then reverse in on full right lock. Straighten up and hold still for 1.5 s, facing the road.' };
     },
@@ -472,9 +1272,10 @@ const MAPS = {
       ctx.fillStyle = '#e9e6df'; ctx.fillRect(-10,-5,20,10); ctx.strokeStyle = '#222'; ctx.lineWidth = 0.25; ctx.strokeRect(-10,-5,20,10);
       ctx.fillStyle = '#2f7fd6'; ctx.fillRect(3,1,3,2.2); ctx.fillStyle = '#20232a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 1.5px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText('ADMINISTRATION OFFICE', 0, -1.5); ctx.restore();
       drawTrees();
+      drawCourseAreas();
       // lane markings
-      dashes([[20,8.3,170,8.3],[30,27.65,84,27.65],[14.5,51.5,85,51.5],[100.3,51.5,159.5,51.5],[100.3,23.6,124,23.6],[8.25,20,8.25,108],
-              [92.65,15,92.65,44.5],[92.65,58.6,92.65,105.4],[14,110.7,165,110.7],[164.6,15,164.6,59],[45,62,45,104],[55.3,62,55.3,104],[65.9,62,65.9,104]]);
+      dashes([[20,8.3,170,8.3],[30,27.65,84,27.65],[14.5,51.5,38,51.5],[62.5,51.5,74,51.5],[111,51.5,159.5,51.5],[100.3,23.6,124,23.6],[8.25,20,8.25,108],
+              [92.65,15,92.65,34],[92.65,70,92.65,105.4],[14,110.7,165,110.7],[164.6,15,164.6,59],[45,62,45,104],[55.3,62,55.3,104],[65.9,62,65.9,104]]);
       ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 0.12; ctx.setLineDash([1,3]);
       for (const y of [48,55]){ ctx.beginPath(); ctx.moveTo(14.5,y); ctx.lineTo(159.5,y); ctx.stroke(); }
       ctx.restore();
@@ -490,14 +1291,14 @@ const MAPS = {
         ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+2.6); ctx.moveTo(x+7.5,y); ctx.lineTo(x+7.5,y+2.6); ctx.stroke();
         ctx.setLineDash([0.6,0.5]); ctx.beginPath(); ctx.moveTo(x,y+2.6); ctx.lineTo(x+7.5,y+2.6); ctx.stroke(); ctx.setLineDash([]); }
       ctx.restore();
+      drawRoadPaint();
       // station numbers from the CDC diagram
       const B = [[1,485,607],[2,95,250],[3,158,128],[4,598,96],[5,882,360],[12,213,615],[13,95,535],[14,95,448],[15,95,360],[17,493,390],[18,493,505],[19,493,580],
         [20,492,205],[21,442,205],[22,296,205],[23,318,108],[24,362,108],[25,427,108],[26,610,250],[27,764,252],[28,926,175],[35,655,96],[36,705,96],[37,758,96],[38,808,96],[39,860,96],[41,300,618],[42,298,520],[43,300,423]];
       for (const [n,px,py] of B){ const x = px*0.17, y = py*0.17;
         ctx.fillStyle = '#16365c'; ctx.beginPath(); ctx.arc(x,y,1.1,0,7); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.15; ctx.stroke();
         ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 1.1px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText(String(n), x, y+0.05); }
-      label('S-COURSE', 22, 37, 1.6); label('CRANK', 106.5, 40.5, 1.4); label('DIRECTIONAL CHANGE', 151, 37.5, 1.3);
-      label('PARALLEL PARKING', 102, 16.45, 1.1, 'left'); label('VERTICAL PARKING', 36, 20.4, 1.4, 'left'); label('SLOPE', 22, 78, 1.8);
+      drawPlates();
       label('CDC UBI CIRCUIT', 116, 92, 3, 'center', 0.35);
     }
   }
@@ -612,7 +1413,7 @@ let MM = 1.45, mini = null;
 function buildMini(){
   MM = 232/WW; const c = document.createElement('canvas'); c.width = Math.round(WW*MM); c.height = Math.round(WH*MM);
   const m = c.getContext('2d'); m.fillStyle = '#3f7a34'; m.fillRect(0,0,c.width,c.height);
-  m.setTransform(MM,0,0,MM,0,0); MAP.paint(m,'#d9ae12','#5a5f68','#3f7a34');
+  m.setTransform(MM,0,0,MM,0,0); MAP.paint(m,'#d9ae12','#5a5f68','#3f7a34'); paintMiniExtras(m);
   mini = c;
 }
 // ---------- Night mode: street lamps and a 1 m light grid for the driver's view ----------
@@ -630,7 +1431,7 @@ function buildLamps(){
   for (const [lx,ly] of LAMPS) for (let y=Math.max(0,ly-11|0); y<Math.min(LH,ly+12); y++) for (let x=Math.max(0,lx-11|0); x<Math.min(LW,lx+12); x++){
     const d = Math.hypot(x+0.5-lx, y+0.5-ly); if (d < 11) LIGHT[y*LW+x] += 0.85*Math.pow(1-d/11, 1.6); }
 }
-function loadMap(id){ MAPID = MAPS[id] ? id : 'circuit'; MAP = MAPS[MAPID]; MAP.build(); buildMask(); buildTrees(); buildMini(); buildLamps(); }
+function loadMap(id){ MAPID = MAPS[id] ? id : 'circuit'; MAP = MAPS[MAPID]; MAP.build(); buildMask(); buildTrees(); buildMini(); buildLamps(); buildRoad(); buildKerb3D(); setTrafBtn(); }
 let savedMap = 'circuit'; try { savedMap = localStorage.getItem('tp-map') || 'circuit'; } catch(e) {}
 loadMap(savedMap);
 
@@ -658,7 +1459,7 @@ function gotoCheckpoint(key){
   if (!cp || !target){ restart(); flash('No checkpoint yet. Started from the beginning.','info',2000); return; }
   restart(false);
   Object.assign(S.done, cp.done); S.pts = cp.pts; S.log = cp.log.map(l => ({...l})); S.t = cp.t; lastCp = cp;
-  const [x,y,th] = APPROACH[target]; Object.assign(S.car, {x,y,th});
+  const [x,y,th] = APPROACH[target]; Object.assign(S.car, {x,y,th}); resetTraffic();
   const m = mid(S.car); cam.x = m.x; cam.y = m.y; camRot = carUp ? th + Math.PI/2 : 0;
   S.focusKey = target; lastSay = ''; updateGuide();
   renderLog(); renderChecklist(); flash('Practising: '+NAMES[target],'info',1800);
@@ -676,25 +1477,26 @@ function jumpTo(key){
   base.done[key] = false;
   restart(false);
   Object.assign(S.done, base.done); S.pts = base.pts; S.log = base.log; S.t = base.t; lastCp = snap();
-  const [x,y,th] = APPROACH[key]; Object.assign(S.car, {x,y,th});
+  const [x,y,th] = APPROACH[key]; Object.assign(S.car, {x,y,th}); resetTraffic();
   const m = mid(S.car); cam.x = m.x; cam.y = m.y; camRot = carUp ? th + Math.PI/2 : 0;
   S.focusKey = key; lastSay = ''; updateGuide();
   renderLog(); renderChecklist(); flash('Practising: '+NAMES[key],'info',1800);
 }
 function closeCpMenu(){ const mnu = document.getElementById('cpMenu'); if (mnu.hidden) return; mnu.hidden = true; if (S.status==='run') paused = false; cv.focus(); }
-function restart(full){ if (full !== false) Sfx.play('door-close-1', {volume:.35}); S = newState(); if (full !== false){ cps = {}; lastCp = snap(); } document.getElementById('cpMenu').hidden = true; const m = mid(S.car); cam.x = m.x; cam.y = m.y; camRot = carUp ? S.car.th + Math.PI/2 : 0; flashes.length = 0; paused = false;
+function restart(full){ if (full !== false) Sfx.play('door-close-1', {volume:.35}); S = newState(); resetTraffic(); if (full !== false){ cps = {}; lastCp = snap(); } document.getElementById('cpMenu').hidden = true; const m = mid(S.car); cam.x = m.x; cam.y = m.y; camRot = carUp ? S.car.th + Math.PI/2 : 0; flashes.length = 0; paused = false;
   document.getElementById('ov').hidden = true; renderLog(); renderChecklist(); cv.focus(); lastSay = ''; updateGuide();
   document.getElementById('routeBtn').hidden = !ROUTE; if (full !== false && ROUTE) showBrief(); }
 
 function flash(text, kind='info', dur){ flashes.push({text,kind,t:performance.now(),dur:dur||(kind==='bad'?2200:1800)}); if (flashes.length>3) flashes.shift(); }
 function addDemerit(n, text){
   if (S.status!=='run') return;
-  S.pts += n; S.log.push({t:S.t,text,n}); renderLog(); Sfx.play('error-003', {volume:.3});
+  S.pts += n; { const m = mid(S.car); S.log.push({t:S.t,text,n,x:m.x,y:m.y}); } renderLog(); Sfx.play('error-003', {volume:.3});
   if (S.pts > 18) fail('Over the demerit limit', `You reached ${S.pts} points. The test fails above 18 points.`);
 }
 function fail(title, msg){
   if (S.status!=='run') return; S.status='fail'; S.car.v = 0;
-  showOv('fail', 'Test failed', `<b>${title}.</b> ${msg}`);
+  { const m = mid(S.car); S.failAt = {x:m.x, y:m.y, t:S.t, title}; }
+  showOv('fail', 'Test failed', `<b>${title}.</b> ${msg}` + mistakeMap());
 }
 function complete(key){
   if (S.done[key]) return; S.done[key] = true; flash(NAMES[key]+' complete ✓','ok'); renderChecklist(); Sfx.play('success-chime', {volume:.45});
@@ -702,8 +1504,25 @@ function complete(key){
   if (!ORDER.every(k=>S.done[k])) flash('Checkpoint saved','info',1400);
   if (ORDER.every(k=>S.done[k]) && S.status==='run'){
     S.status='pass'; Sfx.play('flawless-victory', {volume:.4});
-    showOv('pass','Circuit complete', `All six courses done in ${fmtT(S.t)} with <b>${S.pts} demerit point${S.pts===1?'':'s'}</b>. That is within the 18-point limit. Run it again and aim for zero.`);
+    showOv('pass','Circuit complete', `All six courses done in ${fmtT(S.t)} with <b>${S.pts} demerit point${S.pts===1?'':'s'}</b>. That is within the 18-point limit. Run it again and aim for zero.` + mistakeMap());
   }
+}
+function mistakeMap(){
+  const list = S.log.filter(l => l.x != null), f = S.failAt;
+  if (!list.length && !f) return '<p class="mmnone">No mistakes recorded. Clean drive ✓</p>';
+  const k = 3, c = document.createElement('canvas'); c.width = Math.round(WW*k); c.height = Math.round(WH*k);
+  const g = c.getContext('2d'); g.drawImage(mini, 0, 0, c.width, c.height);
+  const placed = [];
+  const dot = (x, y, col, txt) => { let px = x*k, py = y*k;
+    for (let i=0;i<6 && placed.some(q => Math.hypot(q[0]-px, q[1]-py) < 20);i++){ px += 14; py -= 8; }
+    placed.push([px,py]);
+    g.fillStyle = col; g.strokeStyle = '#111'; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, 11, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#111'; g.font = '700 13px "Barlow Condensed","Arial Narrow",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, px, py+1); };
+  S.log.forEach((l,i) => { if (l.x != null) dot(l.x, l.y, '#f5a524', String(i+1)); });
+  if (f) dot(f.x, f.y, '#ef4a4a', '✕');
+  const rows = S.log.map((l,i) => `<li><span class="mmn">${i+1}</span><span class="mmt">${fmtT(l.t)}</span><span>${l.text}</span><b>+${l.n}</b></li>`).join('')
+    + (f ? `<li class="mmx"><span class="mmn">✕</span><span class="mmt">${fmtT(f.t)}</span><span>${f.title}</span><b>FAIL</b></li>` : '');
+  return `<div class="mm"><span class="lbl">Where your mistakes happened</span><img src="${c.toDataURL()}" alt="Circuit map with a numbered marker at each mistake"><ol class="mml">${rows}</ol></div>`;
 }
 function showOv(cls, title, html){
   const ov = document.getElementById('ov'); ov.className = 'ov '+cls; ov.hidden = false;
@@ -745,14 +1564,14 @@ function legRemaining(){ // polyline from the car to the end of the current leg
   for (let j=g.idx; j<leg.length; j++) pts.push(leg[j].p);
   return pts;
 }
-function turnGlyph(t){ return /^Turn left|left \(Q\)|Check left/.test(t) ? '←' : /^Turn right|right \(E\)|Check right/.test(t) ? '→' : '↑'; }
+function turnGlyph(t){ return /turn left|left \(Q\)|Check left/i.test(t) ? '←' : /turn right|right \(E\)|Check right/i.test(t) ? '→' : '↑'; }
 function showBrief(){
   if (!ROUTE) return;
   const items = ORDER.map((k,i) => `<li class="${S.done[k]?'done':''}"><b>${i+1}. ${NAMES[k]}</b><span>Station ${STN[k]}</span><small>${WHERE ? WHERE[k] : ROUTE[k][1].say}</small></li>`).join('');
-  showOv('brief', 'Your route: CDC Ubi', `Drive these six tasks in order. Follow the cyan line on the map and the instruction at the top of the screen.<ol class="route">${items}</ol><span class="note">This is a practice order, not CDC's official test sequence. Check the order with your instructor.</span>`);
+  showOv('brief', 'Your route: CDC Ubi', `Drive these six tasks in order. Follow the cyan line on the map and the instruction at the top of the screen.<ol class="route">${items}</ol>${ROAD ? '<span class="note">Road rules are live: a traffic light at the centre junction, a zebra crossing on the middle road and STOP lines at the S-course and crank exits. Press T to turn other cars and people off.</span><br>' : ''}<span class="note">This is a practice order, not CDC's official test sequence. Check the order with your instructor.</span>`);
   if (S.status==='run') paused = true;
 }
-function blindCheck(side){ if (S.status!=='run') return; S.lastCheck[side] = S.t; }
+function blindCheck(side){ if (S.status!=='run') return; S.lastCheck[side] = S.t; lookPress = side; }
 function shiftGear(g){
   if (S.status!=='run' || S.car.gear===g) return;
   if (Math.abs(S.car.v) > 0.3){ flash('Stop the car before changing gear','info',1600); return; }
@@ -845,7 +1664,9 @@ function soundUpdate(dt, now){
   // indicator relay: click on every blink change
   if (S.signal){ const b = Math.floor(now/380) % 2 === 0; if (b !== lastBlink){ Car.tick(b); lastBlink = b; } } else lastBlink = null;
   // reverse warning beep
-  if (S.car.gear === 'R'){ revT -= dt; if (revT <= 0){ Car.reverseBeep(); revT = 0.6; } } else revT = 0;
+  // reverse warning; with the beginner guide on, a parking sensor beeps faster as the kerb gets closer (solid tone under 30 cm)
+  if (S.car.gear === 'R'){ revT -= dt; if (revT <= 0){ const d = BG_SENS;
+      if (d < 1.5){ Car.tone(2300, d < 0.3 ? 0.11 : 0.07, 'sine', .12); revT = d < 0.3 ? 0.1 : d < 0.6 ? 0.16 : d < 1.0 ? 0.3 : 0.5; } else { Car.reverseBeep(); revT = 0.6; } } } else revT = 0;
 }
 function sfxGesture(){ if (!Sfx.unlocked){ Sfx.unlock(); } }
 addEventListener('pointerdown', sfxGesture, true); addEventListener('keydown', sfxGesture, true);
@@ -877,6 +1698,8 @@ addEventListener('keydown', e => {
   if (e.code==='KeyH' && S.status==='run') Car.horn();
   if (e.code==='KeyM') toggleMute();
   if (e.code==='KeyN') toggleNight();
+  if (e.code==='KeyT') toggleTraffic();
+  if (e.code==='KeyG') toggleBeginner();
   if (e.code==='Enter' && !(e.target && e.target.closest && e.target.closest('button,select,input,a'))) restart();
   if (e.code==='Backspace') retryCheckpoint();
   if (e.code==='Escape') closeCpMenu();
@@ -911,6 +1734,8 @@ function setNightBtn(){ const b = document.getElementById('nightBtn'); b.textCon
 function toggleNight(){ night = !night; try { localStorage.setItem('tp-night', night ? '1' : '0'); } catch(e) {} setNightBtn(); flash(night ? 'Night driving: headlights on' : 'Day driving', 'info', 1300); }
 document.getElementById('nightBtn').onclick = () => { toggleNight(); cv.focus(); }; setNightBtn();
 document.getElementById('routeBtn').onclick = () => showBrief();
+document.getElementById('trafBtn').onclick = () => { toggleTraffic(); cv.focus(); }; setTrafBtn();
+document.getElementById('bgBtn').onclick = () => { toggleBeginner(); cv.focus(); }; setBgBtn();
 document.getElementById('ovB2').onclick = openCpMenu;
 document.getElementById('cpClose').onclick = closeCpMenu;
 document.getElementById('cpList').onclick = e => { const b = e.target.closest('.cpi'); if (!b) return; if (b.dataset.k==='__restart') restart(); else jumpTo(b.dataset.k); };
@@ -1116,6 +1941,7 @@ function drawWorld(now){
   // grass
   ctx.fillStyle = '#2f5f29'; ctx.fillRect(-200,-200,WW+400,WH+400);
   MAP.draw(now);
+  drawKerbShade();
 
   // slope
   const [sx,sy,sw,sh] = SLOPE_RECT;
@@ -1292,9 +2118,12 @@ function drawScreenUI(now){
     } else {
       for (const k of ORDER){ const [tx,ty] = TARGETS[k]; ctx.fillStyle = S.done[k] ? '#3fca8b' : '#f6c915'; ctx.beginPath(); ctx.arc(mx+tx*MM,my+ty*MM,3,0,7); ctx.fill(); }
     }
+    drawMiniTraffic(mx, my);
+    S.log.forEach((l,i) => { if (l.x == null) return; ctx.fillStyle = '#f5a524'; ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(mx+l.x*MM, my+l.y*MM, 5.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#111'; ctx.font = '700 8px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i+1), mx+l.x*MM, my+l.y*MM+0.5); });
     const c = S.car, m = mid(c); ctx.save(); ctx.translate(mx+m.x*MM,my+m.y*MM); ctx.rotate(c.th);
     ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(-4,-4); ctx.lineTo(-4,4); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
   }
+  if (ROAD && !(driverView && BG_CUE)){ if (cw > 560 && (!driverView || ROUTE)) drawRoadCard(mx-4, my+mh+12, mw+8); else drawRoadCard(12, (bannerBottom || 12) + 8, Math.min(320, cw-24)); }
   // HUD bottom-left
   if (!driverView) {
   const c = S.car, kmh = Math.round(Math.abs(c.v)*3.6);
@@ -1353,7 +2182,7 @@ function render(now){
   const ppm = Math.min(40, Math.max(9, Math.min(cw,ch)/30)) * zoomMul;
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.translate(cw/2, carUp ? ch*0.6 : ch/2); ctx.rotate(-camRot); ctx.scale(ppm,ppm); ctx.translate(-cam.x,-cam.y);
-  drawWorld(now); drawGuide(); drawCar();
+  drawWorld(now); drawTraffic(now); drawGuide(); drawCar();
   if (night) drawNight(ctx.getTransform());
   drawScreenUI(now);
 }
@@ -1374,6 +2203,7 @@ function drawNight(xf){
   ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(nightCan,0,0); ctx.restore();
   // lamp heads and the car's own lights, drawn glowing on top of the dark
   ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  drawTrafficGlow();
   for (const [x,y] of LAMPS){ const r = ctx.createRadialGradient(x,y,0,x,y,2.2); r.addColorStop(0,'rgba(255,214,140,.9)'); r.addColorStop(1,'rgba(255,214,140,0)'); ctx.fillStyle = r; ctx.beginPath(); ctx.arc(x,y,2.2,0,7); ctx.fill(); }
   ctx.translate(c.x, c.y); ctx.rotate(c.th);
   for (const sy of [-0.58,0.58]){ const r = ctx.createRadialGradient(FRONT,sy,0,FRONT,sy,1.1); r.addColorStop(0,'rgba(255,250,220,.9)'); r.addColorStop(1,'rgba(255,250,220,0)'); ctx.fillStyle = r; ctx.beginPath(); ctx.arc(FRONT,sy,1.1,0,7); ctx.fill(); }
@@ -1504,6 +2334,7 @@ function drawMirror(name, cx, cy, mw, mh, lx, ly, mhgt, yawOff, fov, bodySide){
   castView(B, p.x, p.y, mhgt + CAMZ, c.th + Math.PI + yawOff, (w/2)/Math.tan(fov/2), Math.round(h*(name==='rear' ? 0.4 : 0.3)), true);
   ctx.save(); rr(cx-mw/2-4, cy-mh/2-4, mw+8, mh+8, 10); ctx.fillStyle = '#15171b'; ctx.fill();
   rr(cx-mw/2, cy-mh/2, mw, mh, 7); ctx.clip(); ctx.drawImage(B.can, Math.round(cx-mw/2), Math.round(cy-mh/2), mw, mh);
+  { const fM = (w/2)/Math.tan(fov/2), hzM = Math.round(h*(name==='rear' ? 0.4 : 0.3)); drawObjects3D({ex:p.x, ey:p.y, ez:mhgt + CAMZ, hd:c.th + Math.PI + yawOff, F:fM*mw/w, ox:cx, oy:cy - mh/2 + hzM*mh/h, flip:true}, false); }
   ctx.fillStyle = '#e9ebee';
   if (bodySide==='left' || bodySide==='right'){
     // the car's own flank, seen from the mirror glass with the same camera as the road (so it fills about a quarter)
@@ -1530,12 +2361,21 @@ function drawMirror(name, cx, cy, mw, mh, lx, ly, mhgt, yawOff, fov, bodySide){
   ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(cx-mw/2, cy-mh/2, mw, mh*0.3);
   ctx.restore();
 }
+let lookCur = 0, lookVel = 0, lookLast = performance.now(), holdT = 0, lookSide = 1, lookTap = 0, wasHeld = false, lookPress = null;
 function renderDriver(now){
   if (!tex) bakeTex();
   const c = S.car;
   // head turn when checking blind spots
-  let look = 0;
-  for (const [side,sg] of [['L',-1],['R',1]]){ const age = S.t - S.lastCheck[side]; if (age >= 0 && age < 0.9) look += sg*1.25*Math.sin(Math.PI*age/0.9); }
+  // tap Q / E: a quick glance. Hold: turn over that shoulder and keep looking. A damped spring eases the head so it never snaps.
+  const hL = keys.KeyQ && !keys.KeyE, hR = keys.KeyE && !keys.KeyQ, held = (hL || hR) && S.status==='run' && !paused;
+  const ldt = Math.min(0.05, Math.max(0, (now - lookLast)/1000)); lookLast = now;
+  if (held){ const sd = hL ? -1 : 1; if (sd !== lookSide || !wasHeld){ lookSide = sd; holdT = 0; } holdT += ldt; wasHeld = true; lookPress = null; }
+  else if (wasHeld){ wasHeld = false; lookTap = holdT > 0.35 ? 0 : Math.max(0.1, 0.45 - holdT); holdT = 0; }
+  else if (lookPress){ lookSide = lookPress === 'L' ? -1 : 1; lookTap = 0.45; lookPress = null; }   // a tap shorter than one frame
+  else if (lookTap > 0) lookTap -= ldt;
+  const target = held ? lookSide*(holdT > 0.35 ? 1.95 : 1.25) : lookTap > 0 ? lookSide*1.25 : 0;
+  for (let i=0;i<4;i++){ const hh = ldt/4; lookVel += (55*(target - lookCur) - 14.8*lookVel)*hh; lookCur += lookVel*hh; }
+  const look = lookCur;
   const W = Math.round(Math.max(320, Math.min(760, cw))), H = Math.max(160, Math.round(W*ch/cw));
   if (!MV || MV.w!==W || MV.h!==H) MV = mkBuf(W,H);
   const eye = toWorld(c, EYE_X, EYE_Y), hd = c.th + look;
@@ -1560,19 +2400,9 @@ function renderDriver(now){
     ctx.fillStyle = 'rgba(90,100,110,.25)'; for (let yy = HZW-hp+3; yy < HZW-2; yy += 4) ctx.fillRect(x1+2, yy, x2-x1-4, 1);
     ctx.globalAlpha = 1;
   }
-  // trees as billboards, far to near
-  const bb = [];
-  for (const t of TREES){ const p = proj(t[0],t[1]); if (p.z > 1.2 && p.z < 200 && Math.abs(p.x/p.z) < 1.6) bb.push([p.z,p.x,t]); }
-  bb.sort((a,b) => b[0]-a[0]);
-  for (const [z,x,t] of bb){
-    const s = F/z, sx = cw/2 + x*s, gy = HZW + eyeZ*s, r = t[2]*1.1*s;
-    ctx.globalAlpha = Math.max(0.25, 1 - Math.max(0, z-35)/200);
-    if (night) ctx.globalAlpha *= 0.35;
-    ctx.fillStyle = '#5b4632'; ctx.fillRect(sx - 0.18*s, gy - 2.6*s, 0.36*s, 2.6*s);
-    ctx.fillStyle = t[3] > 0.5 ? '#2f6d2c' : '#3a7c33'; ctx.beginPath(); ctx.arc(sx, gy - (2.4+t[2])*s, r, 0, 7); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.beginPath(); ctx.arc(sx - r*0.3, gy - (2.4+t[2])*s - r*0.3, r*0.45, 0, 7); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+  // trees, signals, signs, pedestrians and other cars, far to near
+  drawObjects3D({ex:eye.x, ey:eye.y, ez:eyeZ, hd, F, ox:cw/2, oy:HZW, flip:false}, true);
+  drawBeginnerGround({ex:eye.x, ey:eye.y, ez:eyeZ, hd, F, ox:cw/2, oy:HZW});
   // route line painted on the road ahead
   const remD = legRemaining();
   if (remD){
@@ -1623,15 +2453,15 @@ function renderDriver(now){
 
   // bonnet, from its front edge back to the base of the windscreen
   const BF = FRONT - 0.14;
-  if (poly([P(BF,-0.74,0.79),P(BF,0.74,0.79),P(2.32,0.8,0.97),P(2.32,-0.8,0.97)], night ? '#59606a' : '#eceef1')){
-    poly([P(BF,-0.74,0.79),P(BF,0.74,0.79),P(BF+0.1,0.7,0.72),P(BF+0.1,-0.7,0.72)], '#c7ccd3');
-    seg(P(BF-0.05,-0.3,0.8), P(2.4,-0.36,0.96), 'rgba(150,158,168,.55)', 1.5);
-    seg(P(BF-0.05,0.3,0.8), P(2.4,0.36,0.96), 'rgba(150,158,168,.55)', 1.5);
-    seg(P(BF-0.02,-0.72,0.79), P(2.34,-0.79,0.965), 'rgba(214,40,60,.75)', 2.5);
-    seg(P(BF-0.02,0.72,0.79), P(2.34,0.79,0.965), 'rgba(214,40,60,.75)', 2.5);
+  if (poly([P(BF,-0.74,0.69),P(BF,0.74,0.69),P(2.32,0.8,0.93),P(2.32,-0.8,0.93)], night ? '#59606a' : '#eceef1')){
+    poly([P(BF,-0.74,0.69),P(BF,0.74,0.69),P(BF+0.1,0.7,0.62),P(BF+0.1,-0.7,0.62)], '#c7ccd3');
+    seg(P(BF-0.05,-0.3,0.70), P(2.4,-0.36,0.92), 'rgba(150,158,168,.55)', 1.5);
+    seg(P(BF-0.05,0.3,0.70), P(2.4,0.36,0.92), 'rgba(150,158,168,.55)', 1.5);
+    seg(P(BF-0.02,-0.72,0.69), P(2.34,-0.79,0.925), 'rgba(214,40,60,.75)', 2.5);
+    seg(P(BF-0.02,0.72,0.69), P(2.34,0.79,0.925), 'rgba(214,40,60,.75)', 2.5);
   }
   // wipers parked at the base of the windscreen
-  seg(P(2.3,-0.72,0.985), P(2.3,0.02,0.985), '#121316', 3); seg(P(2.3,0.06,0.985), P(2.3,0.74,0.985), '#121316', 3);
+  seg(P(2.3,-0.72,0.945), P(2.3,0.02,0.945), '#121316', 3); seg(P(2.3,0.06,0.945), P(2.3,0.74,0.945), '#121316', 3);
 
   // dashboard top and face
   poly([P(2.24,-0.9,0.955),P(2.24,0.9,0.955),P(1.86,0.9,0.915),P(1.86,-0.9,0.915)], '#26282d');
@@ -1665,7 +2495,7 @@ function renderDriver(now){
     if (showInset){
       const m = mid(c); ctx.save(); ctx.beginPath(); ctx.rect(sx, sy, vw, sH); ctx.clip();
       ctx.translate(sx+vw/2, sy+sH*0.5); ctx.rotate(-(c.th+Math.PI/2)); const ppm = vw/12; ctx.scale(ppm,ppm); ctx.translate(-m.x,-m.y);
-      drawWorld(now); drawCar(); ctx.restore(); ctx.setTransform(dpr,0,0,dpr,0,0);
+      drawWorld(now); drawTraffic(now); drawCar(); ctx.restore(); ctx.setTransform(dpr,0,0,dpr,0,0);
       if (c.gear==='R'){ const u = vw/12, bx = sx+vw/2, by = sy+sH*0.5; ctx.strokeStyle = 'rgba(246,201,21,.9)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(bx-0.95*u, by+0.6*u); ctx.lineTo(bx-1.25*u, sy+sH); ctx.moveTo(bx+0.95*u, by+0.6*u); ctx.lineTo(bx+1.25*u, sy+sH); ctx.stroke(); }
       ctx.fillStyle = 'rgba(8,9,10,.75)'; ctx.fillRect(sx, sy, vw, 15);
@@ -1712,6 +2542,21 @@ function renderDriver(now){
   poly([P(1.5,-0.8,1.43),P(1.5,0.8,1.43),P(1.42,0.8,1.45),P(1.42,-0.8,1.45)], '#45474d');
   poly([P(1.62,-0.74,1.42),P(1.62,-0.07,1.42),P(1.5,-0.07,1.39),P(1.5,-0.74,1.39)], '#55575d');
   poly([P(1.62,0.07,1.42),P(1.62,0.74,1.42),P(1.5,0.74,1.39),P(1.5,0.07,1.39)], '#55575d');
+  // rear cabin, seen when you hold Q / E: rear seat, rear doors, C-pillars and roof lining
+  poly([P(0.9,-0.8,1.45),P(0.9,0.8,1.45),P(-0.55,0.76,1.4),P(-0.55,-0.76,1.4)], '#45474d');
+  for (const [y0,y1] of [[-0.72,0],[0,0.72]]){
+    poly([P(-0.12,y0,0.45),P(-0.12,y1,0.45),P(-0.34,y1,1.02),P(-0.34,y0,1.02)], '#2c2f35');                 // rear seat back
+    poly([P(0.35,y0,0.45),P(0.35,y1,0.45),P(-0.12,y1,0.45),P(-0.12,y0,0.45)], '#34373d');                   // rear cushion
+    const hc = (y0+y1)/2; poly([P(-0.32,hc-0.13,1.04),P(-0.32,hc+0.13,1.04),P(-0.36,hc+0.13,1.2),P(-0.36,hc-0.13,1.2)], '#35383e');   // headrest
+  }
+  for (const s of [1,-1]){
+    const y = 0.86*s;
+    poly([P(0.4,y,0.95),P(-0.3,y,0.95),P(-0.3,y,0.2),P(0.4,y,0.2)], '#1e2025');                               // rear door below the window
+    seg(P(0.4,y,0.95), P(-0.3,y,0.95), 'rgba(196,203,212,.5)', 2);
+    poly([P(0.25,y,0.72),P(-0.05,y,0.72),P(-0.05,y-0.07*s,0.67),P(0.25,y-0.07*s,0.67)], '#2b2e34');           // rear armrest
+    poly([P(-0.05,y,0.95),P(-0.32,y,0.95),P(-0.6,y*0.91,1.37),P(-0.28,y*0.93,1.42)], '#1f2228');             // C-pillar
+    seg(P(0.86,y*0.93,1.42), P(-0.28,y*0.93,1.42), '#2a2d33', 3);                                              // window top rail
+  }
   // doors (window sill, armrest, handle) and B-pillars, seen when you turn your head
   for (const s of [1,-1]){
     const y = 0.86*s;
@@ -1732,14 +2577,14 @@ function renderDriver(now){
   // a little below eye level. The screen is narrower than human vision, so sideways offsets are compressed.
   const squeeze = (px, lim) => { const off = px - cw/2; return cw/2 + Math.sign(off)*Math.min(Math.abs(off), lim); };
   const rm = P(1.62,0,1.3), mW = Math.round(Math.min(cw*0.22, 230)), mH = Math.round(mW*0.29);
-  if (rm[2]){
+  if (rm[2] && Math.abs(look) < 0.9){
     const x = squeeze(rm[0], cw*0.17), y = Math.max(mH/2+18, Math.min(rm[1], HZ*0.5));
     ctx.fillStyle = '#1b1d21'; ctx.fillRect(x-5, 0, 10, y-mH/2);                       // stem up to the roof
     drawMirror('rear', x, y, mW, mH, 0.2, 0, 1.25, 0, 0.75, 'rear'); mirrorBottom = y + mH/2 + 6;
   }
   const wR = P(2.02,1.0,0.98), wL = P(2.02,-1.0,0.98);
   const wing = (p, name, ly, yaw, side, scale) => {
-    if (!p[2]) return;
+    if (!p[2] || Math.abs(look) > 0.9) return;
     const wW = Math.round(Math.min(cw*0.15, 150)*scale), wH = Math.round(wW*0.62);
     const x = squeeze(p[0], cw/2 - wW/2 - 14);
     let y = Math.min(ch - wH/2 - 10, Math.max(HZ + wH*0.35, p[1]));
@@ -1806,6 +2651,7 @@ function renderDriver(now){
     ctx.fillStyle = '#f6c915'; ctx.fillRect(-wr*0.035, -wr*1.08, wr*0.07, wr*0.13);
     ctx.restore(); ctx.lineCap = 'butt';
   }
+  drawBeginnerHud(Math.round(Math.max(HZ + 10, ch*0.47)));
   // head-check label
   if (Math.abs(look) > 0.15){ ctx.font = '700 18px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = 'rgba(17,20,24,.85)'; rr(cw/2-90, HZ-60, 180, 28, 6); ctx.fill(); ctx.fillStyle = '#62ccff'; ctx.fillText(look < 0 ? '◀ Checking left blind spot' : 'Checking right blind spot ▶', cw/2, HZ-46); }
@@ -1823,7 +2669,7 @@ function renderChecklist(){
 function renderLog(){
   const el = $('log');
   if (!S.log.length){ el.innerHTML = '<span class="empty">No faults recorded.</span>'; }
-  else el.innerHTML = S.log.map(l => `<div><span class="tm">${fmtT(l.t)}</span><span>${l.text}</span><span class="pt">+${l.n}</span></div>`).join('');
+  else el.innerHTML = S.log.map((l,i) => `<div><span class="tm">${fmtT(l.t)}</span><span><b class="lgn">${i+1}</b> ${l.text}</span><span class="pt">+${l.n}</span></div>`).join('');
   el.scrollTop = el.scrollHeight;
   $('dem').textContent = S.pts;
   const pct = Math.min(100, S.pts/20*100); const bar = $('demBar'); bar.style.width = pct+'%';
@@ -1857,7 +2703,10 @@ function frame(now){
   if (S.status==='run' && !paused && focused){
     S.t += dt;
     const n = 4; for (let i=0;i<n && S.status==='run';i++) physics(dt/n);
+    if (keys.KeyQ) S.lastCheck.L = S.t; if (keys.KeyE) S.lastCheck.R = S.t;   // holding the key keeps the check fresh
     if (S.status==='run') rules(dt);
+    if (S.status==='run' && ROAD){ trafficStep(dt); if (S.status==='run') roadRules(dt); }
+    bgUpdate(dt);
     if (S.status==='run') updateGuide();
   }
   const m = mid(S.car), k = Math.min(1, dt*5);
