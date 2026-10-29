@@ -65,6 +65,12 @@ This is a simplified practice tool. Real TP test marking covers more items.
 - [ ] Progress tracking across sessions
 - [ ] Theory test (FTT/BTT) quiz mode
 
+## Support the project
+
+Found it useful? Follow, like and share to help more learners find it:
+
+[![TikTok](https://img.shields.io/badge/TikTok-Follow%20%26%20like-000000?logo=tiktok&logoColor=white)](https://vt.tiktok.com/ZSgsWy389/)
+
 ## Run it locally
 
 Download `index.html` and open it in any modern browser. That's it.
