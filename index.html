@@ -181,7 +181,7 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
       <div style="color:var(--muted)">Follow the yellow arrow. Before turning inside a blue dashed zone, signal (<kbd>Z</kbd>/<kbd>X</kbd>) and check your blind spot (<kbd>Q</kbd>/<kbd>E</kbd>). On the CDC map, stop at red lights and STOP lines and give way at the zebra.</div>
     </div>
 
-    <div class="stagebtns"><button class="btn ghost" id="bgBtn" title="Turn the beginner guide on (G)" aria-pressed="false">🎓 Guide</button><button class="btn ghost" id="trafBtn" title="Other cars and people on or off (T)" aria-pressed="true" hidden>🚗 Traffic</button><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
+    <div class="stagebtns"><button class="btn ghost" id="tutBtn" title="Show the controls">⌨ Controls</button><button class="btn ghost" id="bgBtn" title="Turn the beginner guide on (G)" aria-pressed="false">🎓 Guide</button><button class="btn ghost" id="trafBtn" title="Other cars and people on or off (T)" aria-pressed="true" hidden>🚗 Traffic</button><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
 
     <div class="ov" id="cpMenu" hidden>
       <div class="box">
@@ -2697,10 +2697,11 @@ function updatePanel(){
 }
 
 // ---------- Loop ----------
+function tutOpen(){ const t = document.getElementById('tut'), g = document.getElementById('gate'); return (!!t && !t.hidden) || (!!g && !g.hidden); }   // name box or controls popup open: game waits
 let last = performance.now();
 function frame(now){
-  const dt = Math.min(0.05, (now-last)/1000); last = now;
-  if (S.status==='run' && !paused && focused){
+  const dt = Math.max(0, Math.min(0.05, (now-last)/1000)); last = now;   // never step time backwards
+  if (S.status==='run' && !paused && focused && !tutOpen()){
     S.t += dt;
     const n = 4; for (let i=0;i<n && S.status==='run';i++) physics(dt/n);
     if (keys.KeyQ) S.lastCheck.L = S.t; if (keys.KeyE) S.lastCheck.R = S.t;   // holding the key keeps the check fresh
@@ -2718,6 +2719,204 @@ function frame(now){
 restart();
 if (ROUTE) showBrief(); else if (!focused) showOv('focus','Ready to drive','Click below to give the circuit keyboard control, then follow the yellow arrow to the crank course.');
 requestAnimationFrame(frame);
+})();
+</script>
+
+<style>
+/* Concept B: Controls map. One screen, like a game's controls page: a keyboard with the used keys lit by job. Press or tap any key to read what it does. */
+.tut{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(10,12,15,.8);backdrop-filter:blur(3px);padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+.tut .tw{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:100%;max-width:640px;max-height:100%;overflow:auto;box-sizing:border-box;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.tut .th{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:16px 14px 0 18px}
+.tut .eb{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tut h2{margin:2px 0 0;font-family:var(--display);font-size:32px;line-height:1;text-wrap:balance}
+.tut .bd{padding:12px 18px 0;display:flex;flex-direction:column;gap:12px}
+.tut .seg{display:inline-flex;background:var(--raise);border:1px solid var(--line);border-radius:7px;padding:2px;align-self:flex-start}
+.tut .seg button{background:none;border:0;color:var(--muted);font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.03em;padding:5px 12px;border-radius:5px}
+.tut .seg button[aria-selected="true"]{background:var(--panel);color:var(--fg)}
+.tut .seg button:focus-visible{outline:2px solid var(--sky);outline-offset:1px}
+.tut .ro{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--raise);border-radius:8px;padding:10px 12px;border-left:4px solid var(--gc,var(--line));min-height:52px}
+.tut .rk{font-family:var(--display);font-weight:700;font-size:24px;min-width:44px;height:44px;padding:0 10px;box-sizing:border-box;display:grid;place-items:center;border-radius:7px;background:#2b313a;border:1px solid #3a424d;border-bottom-width:3px;color:var(--gc,var(--fg))}
+.tut .ro b{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--gc,var(--muted))}
+.tut .ro div div{line-height:1.4}
+.tut .kbw{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.tut .kbm{flex:1 1 300px;min-width:0;container-type:inline-size;display:flex;flex-direction:column;gap:4px}
+.tut .kr{display:flex;gap:4px}
+.tut .kbm{--u:min(40px,calc((100cqw - 40px)/10.6))}
+.tut .ky{--w:1;flex:none;width:calc(var(--u)*var(--w) + 4px*(var(--w) - 1));height:var(--u);box-sizing:border-box;border-radius:6px;font-family:var(--display);font-weight:700;font-size:calc(var(--u)*.42);display:grid;place-items:center;position:relative;padding:0;
+  background:#1d2128;border:1px solid #262c35;border-bottom-width:3px;color:#4a525e}
+.tut .ky.on{background:color-mix(in srgb,var(--gc) 14%,#2b313a);border-color:color-mix(in srgb,var(--gc) 55%,#3a424d);color:var(--fg);cursor:pointer}
+.tut .ky.on:hover{border-color:var(--gc)}
+.tut .ky.on:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.tut .ky.off{background:#1d2128;border-color:#2c333d;color:#5a626e;cursor:pointer;border-style:dashed}
+.tut .ky.tried::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.tut .ky.hit{animation:tuthit .3s ease-out}
+@keyframes tuthit{30%{transform:translateY(2px);border-bottom-width:1px;background:var(--gc);color:#16181b}}
+.tut .side{display:flex;flex-direction:column;gap:4px;align-items:center;--u:38px}
+.tut .side .kr{justify-content:center}
+.tut .lg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tut .lgi{display:flex;flex-direction:column;gap:3px;background:var(--raise);border-radius:6px;padding:7px 9px;border-top:3px solid var(--gc)}
+.tut .lgi b{font-size:12.5px}
+.tut .lgi small{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.tut .lgi small.full{color:var(--ok);font-weight:700}
+.tut .tip{font-size:12.5px;color:var(--muted);line-height:1.45}
+.tut .tip kbd{font-size:12px}
+.tut .tf{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 18px 16px;border-top:1px solid var(--line);margin-top:14px}
+.tut .nh{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+.tut .nh input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+@media (max-width:520px){.tut .lg{grid-template-columns:repeat(2,minmax(0,1fr))}.tut h2{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.tut .ky.hit{animation:none}}
+</style>
+
+<div class="tut" id="tut" hidden role="dialog" aria-modal="true" aria-labelledby="tutT">
+  <div class="tw">
+    <div class="th"><div><div class="eb">Before you drive</div><h2 id="tutT">Know your controls</h2></div><button class="x" id="tutX" aria-label="Close controls">×</button></div>
+    <div class="bd">
+      <div class="seg" role="tablist" aria-label="Gearbox"><button role="tab" id="tutAuto" aria-selected="true">Automatic</button><button role="tab" id="tutMan" aria-selected="false">Manual</button></div>
+      <div class="ro" id="tutRo" aria-live="polite"><span class="rk" id="tutRk">?</span><div><b id="tutRg">Try it</b><div id="tutRd"></div></div></div>
+      <div class="kbw"><div class="kbm" id="tutKb"></div><div class="side" id="tutSide"></div></div>
+      <div class="lg" id="tutLg"></div>
+      <div class="tip">Every turn on the circuit: <kbd>Z</kbd>/<kbd>X</kbd> signal, then <kbd>Q</kbd>/<kbd>E</kbd> blind spot. Skipping either costs 4 points. The car stays parked while this is open.</div>
+    </div>
+    <div class="tf">
+      <label class="nh" for="tutHide"><input type="checkbox" id="tutHide"> Don't show this again</label>
+      <button class="btn" id="tutGo">Start driving</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Mini tutorial, concept B. Keys pressed while it is open are caught here and never reach the car.
+(() => {
+  const KEY = 'tp-tut-hide';
+  const $ = id => document.getElementById(id);
+  const tut = $('tut');
+  const G = {
+    drive:{ n:'Drive', c:'var(--accent)' },
+    gear: { n:'Gears', c:'var(--ok)' },
+    safe: { n:'Before turning', c:'var(--warn)' },
+    tool: { n:'View & tools', c:'var(--sky)' }
+  };
+  // a = automatic meaning, m = manual meaning (falls back to a). null = not used in that gearbox.
+  const K = {
+    KeyQ:{ l:'Q', g:'safe', a:'Check your left blind spot. Hold to look over your shoulder.' },
+    KeyW:{ l:'W', g:'drive', a:'Accelerator. Moves you in the gear shown.' },
+    KeyE:{ l:'E', g:'safe', a:'Check your right blind spot. Hold to look over your shoulder.' },
+    KeyR:{ l:'R', g:'gear', a:'Reverse. The car must be stopped.', m:'Reverse gear. Clutch down first.' },
+    KeyT:{ l:'T', g:'tool', a:'Other cars and people on or off (CDC map).' },
+    KeyI:{ l:'I', g:'gear', a:null, m:'Start the engine.' },
+    KeyP:{ l:'P', g:'tool', a:'Pause and resume.' },
+    KeyA:{ l:'A', g:'drive', a:'Steer left. Let go and the wheel straightens.' },
+    KeyS:{ l:'S', g:'drive', a:'Brake. Never changes gear.' },
+    KeyD:{ l:'D', g:'drive', a:'Steer right. Let go and the wheel straightens.' },
+    KeyF:{ l:'F', g:'gear', a:'Drive. The car must be stopped.', m:'First gear. Clutch down first.' },
+    KeyG:{ l:'G', g:'tool', a:'Beginner guide on or off: when to get ready, where to stop.' },
+    KeyH:{ l:'H', g:'tool', a:'Horn.' },
+    ShiftLeft:{ l:'Shift', w:1.6, g:'gear', a:null, m:'Clutch. Hold to press it down, let go to lift it slowly. With ↑ ↓: change gear.' },
+    KeyZ:{ l:'Z', g:'safe', a:'Left signal. Turns off by itself after the turn.' },
+    KeyX:{ l:'X', g:'safe', a:'Right signal. Turns off by itself after the turn.' },
+    KeyC:{ l:'C', g:'tool', a:"Switch view: car-up, north-up, driver's seat." },
+    KeyV:{ l:'V', g:'gear', a:null, m:'Hold the clutch at the biting point.' },
+    KeyB:{ l:'B', g:'tool', a:"360° camera on the dash screen (driver's seat view)." },
+    KeyN:{ l:'N', g:'tool', a:'Night driving on or off.' },
+    KeyM:{ l:'M', g:'tool', a:'Sound on or off.' },
+    Space:{ l:'Space', w:5.2, g:'gear', a:'Handbrake. Hold it. Use it on the slope.' },
+    Backspace:{ l:'⌫', w:1.6, g:'tool', a:'Retry the latest checkpoint without restarting the test.' },
+    ArrowUp:{ l:'↑', g:'drive', a:'Accelerator, same as W.', m:'Accelerator. With Shift held: shift up a gear.' },
+    ArrowDown:{ l:'↓', g:'drive', a:'Brake, same as S.', m:'Brake. With Shift held: shift down a gear.' },
+    ArrowLeft:{ l:'←', g:'drive', a:'Steer left, same as A.' },
+    ArrowRight:{ l:'→', g:'drive', a:'Steer right, same as D.' }
+  };
+  const ROWS = [
+    { pad:0,   k:['KeyQ','KeyW','KeyE','KeyR','KeyT','Y','U','KeyI','O','KeyP'] },
+    { pad:.35, k:['KeyA','KeyS','KeyD','KeyF','KeyG','KeyH','J','K','L'] },
+    { pad:0,   k:['ShiftLeft','KeyZ','KeyX','KeyC','KeyV','KeyB','KeyN','KeyM'] },
+    { pad:2.2, k:['Space'] }
+  ];
+  const SIDE = [['Backspace'], ['ArrowUp'], ['ArrowLeft','ArrowDown','ArrowRight']];
+  const ALIAS = { ShiftRight:'ShiftLeft' };
+
+  let manual = false, tried = new Set();
+  const meaning = c => manual ? (K[c].m !== undefined ? K[c].m : K[c].a) : K[c].a;
+
+  function keyHtml(c){
+    const k = K[c];
+    if (!k) return '<span class="ky" aria-hidden="true">' + c + '</span>';
+    const on = meaning(c) != null;
+    return '<button type="button" class="ky ' + (on ? 'on' : 'off') + (tried.has(c) ? ' tried' : '') + '" data-c="' + c + '" style="--gc:' + G[k.g].c + (k.w ? ';--w:' + k.w : '') + '" aria-label="' + k.l + '">' + k.l + '</button>';
+  }
+  function draw(){
+    $('tutKb').innerHTML = ROWS.map(r => '<div class="kr" style="padding-left:calc(var(--u)*' + r.pad + ')">' + r.k.map(keyHtml).join('') + '</div>').join('');
+    $('tutSide').innerHTML = SIDE.map(r => '<div class="kr">' + r.map(keyHtml).join('') + '</div>').join('');
+    $('tutLg').innerHTML = Object.keys(G).map(g => {
+      const all = Object.keys(K).filter(c => K[c].g === g && meaning(c) != null);
+      const got = all.filter(c => tried.has(c)).length;
+      return '<div class="lgi" style="--gc:' + G[g].c + '"><b>' + G[g].n + '</b><small class="' + (got === all.length ? 'full' : '') + '">' + (got === all.length ? '✓ All ' + all.length + ' tried' : got + ' of ' + all.length + ' tried') + '</small></div>';
+    }).join('');
+    $('tutAuto').setAttribute('aria-selected', String(!manual));
+    $('tutMan').setAttribute('aria-selected', String(manual));
+  }
+  function idle(){
+    const ro = $('tutRo'); ro.style.removeProperty('--gc');
+    $('tutRk').textContent = '?'; $('tutRg').textContent = 'Try it';
+    $('tutRd').textContent = matchMedia('(hover: none)').matches ? 'Tap any lit key to see what it does.' : 'Press any key, or click one below, to see what it does.';
+  }
+  function show(c){
+    const k = K[c]; if (!k) return;
+    const m = meaning(c);
+    $('tutRo').style.setProperty('--gc', G[k.g].c);
+    $('tutRk').textContent = k.l;
+    $('tutRg').textContent = G[k.g].n;
+    $('tutRd').textContent = m != null ? m : 'Manual gearbox only. Switch to Manual above to see this key.';
+    if (m != null) tried.add(c);
+    draw();
+    const b = tut.querySelector('.ky[data-c="' + c + '"]');
+    if (b){ b.classList.add('hit'); }
+  }
+  function setMode(m){ manual = m; draw(); idle(); }
+
+  function open(){
+    const s = $('gbSel'); manual = !!s && s.value === 'manual'; tried.clear();
+    let hide = false; try { hide = localStorage.getItem(KEY) === '1'; } catch(e) {}
+    $('tutHide').checked = hide;
+    tut.hidden = false; draw(); idle();
+    setTimeout(() => $('tutGo').focus(), 30);
+  }
+  function close(){
+    try { localStorage.setItem(KEY, $('tutHide').checked ? '1' : '0'); } catch(e) {}
+    tut.hidden = true;
+    const cv = $('cv'); if (cv) cv.focus();
+  }
+
+  // Catch keys first, so the car stays parked while the player explores.
+  const PASS = ['Tab','Enter','NumpadEnter'];
+  addEventListener('keydown', e => {
+    if (tut.hidden) return;
+    e.stopImmediatePropagation();
+    if (e.code === 'Escape'){ e.preventDefault(); close(); return; }
+    if (PASS.includes(e.code)) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    show(ALIAS[e.code] || e.code);
+  }, true);
+  addEventListener('keyup', e => { if (!tut.hidden){ e.stopImmediatePropagation(); if (!PASS.includes(e.code)) e.preventDefault(); } }, true);
+
+  tut.addEventListener('click', e => {
+    const b = e.target.closest('.ky[data-c]'); if (b){ show(b.dataset.c); return; }
+    if (e.target === tut) close();
+  });
+  $('tutAuto').onclick = () => setMode(false);
+  $('tutMan').onclick = () => setMode(true);
+  $('tutGo').onclick = close;
+  $('tutX').onclick = close;
+  const tb = $('tutBtn'); if (tb) tb.onclick = open;
+
+  // First visit: wait for the name box to close, then show the controls.
+  let hide = false; try { hide = localStorage.getItem(KEY) === '1'; } catch(e) {}
+  if (!hide){
+    const gate = $('gate');
+    if (!gate || gate.hidden) open();
+    else { const mo = new MutationObserver(() => { if (gate.hidden){ mo.disconnect(); open(); } }); mo.observe(gate, { attributes:true, attributeFilter:['hidden'] }); }
+  }
 })();
 </script>
 
