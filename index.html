@@ -119,6 +119,24 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
   .panel{overflow:visible}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+/* feedback popup */
+.fb{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(10,12,15,.72);backdrop-filter:blur(2px)}
+.fb .fbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;width:100%;max-width:380px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;position:relative;max-height:calc(100% - 16px);overflow:auto}
+.fb h2{margin:0;font-family:var(--display);font-size:32px;line-height:1;color:var(--fg)}
+.fb p{margin:0;color:#cdd2d9;line-height:1.45}
+.fb .fbx{position:absolute;right:10px;top:8px;background:none;border:0;color:var(--muted);font-size:20px;padding:2px 6px;border-radius:4px}
+.fb .stars{display:flex;gap:6px}
+.fb .star{flex:1;background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:8px 0 6px;color:#4a525e;font-size:26px;line-height:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.fb .star small{font:700 11px var(--body);color:var(--muted)}
+.fb .star.on{color:var(--accent);border-color:var(--accent)}
+.fb .scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:-6px}
+.fb textarea{font:inherit;font-size:15px;background:var(--raise);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:9px 11px;min-height:76px;resize:vertical}
+.fb .row{display:flex;gap:8px}.fb .row .btn{flex:1}
+.fb .btn[disabled]{opacity:.45;cursor:not-allowed}
+.fb .fine{font-size:11.5px;color:var(--muted)}
+.fb .ok h2{color:var(--ok)}
+.fb .star:focus-visible,.fb textarea:focus-visible,.fb .fbx:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
 /* name gate */
 .gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(10,12,15,.86);backdrop-filter:blur(3px)}
 .gate form{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;width:100%;max-width:360px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
@@ -296,6 +314,28 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
     <button class="btn" id="gateBtn" type="submit">Save &amp; play</button>
     <small>Your name is sent to the trainer's creator to count players. Nothing else is collected.</small>
   </form>
+</div>
+<div class="fb" id="fb" hidden role="dialog" aria-modal="true" aria-labelledby="fbT">
+  <form class="fbox" id="fbForm" novalidate>
+    <button class="fbx" type="button" id="fbX" aria-label="Close">×</button>
+    <h2 id="fbT">How's the trainer?</h2>
+    <p>You've done a few runs. Quick rating helps me make it better.</p>
+    <span class="lbl">Rate your experience</span>
+    <div class="stars" id="fbStars" role="radiogroup" aria-label="Rating, 1 to 5"></div>
+    <div class="scale"><span>Not useful</span><span>Very useful</span></div>
+    <label class="lbl" for="fbTxt">Feedback or suggestions (optional)</label>
+    <textarea id="fbTxt" maxlength="500" placeholder="e.g. Add the slope course, steering feels too sensitive…"></textarea>
+    <div class="row">
+      <button class="btn ghost" type="button" id="fbLater">Not now</button>
+      <button class="btn" type="submit" id="fbSend" disabled>Send</button>
+    </div>
+    <span class="fine">Sent with your player name. Only your rating and comment are collected.</span>
+  </form>
+  <div class="fbox ok" id="fbThanks" hidden>
+    <h2>Thanks!</h2>
+    <p>Got it. Back to the circuit — good luck on your TP.</p>
+    <button class="btn" type="button" id="fbDone">Keep driving</button>
+  </div>
 </div>
 <iframe name="gateSink" title="" aria-hidden="true" tabindex="-1" style="display:none"></iframe>
 
@@ -1487,6 +1527,7 @@ function restart(full){ if (full !== false) Sfx.play('door-close-1', {volume:.35
   document.getElementById('ov').hidden = true; renderLog(); renderChecklist(); cv.focus(); lastSay = ''; updateGuide();
   document.getElementById('routeBtn').hidden = !ROUTE; if (full !== false && ROUTE) showBrief(); }
 
+function userRestart(){ restart(); if (window.tpFeedback) window.tpFeedback.countRestart(); }
 function flash(text, kind='info', dur){ flashes.push({text,kind,t:performance.now(),dur:dur||(kind==='bad'?2200:1800)}); if (flashes.length>3) flashes.shift(); }
 function addDemerit(n, text){
   if (S.status!=='run') return;
@@ -1700,7 +1741,7 @@ addEventListener('keydown', e => {
   if (e.code==='KeyN') toggleNight();
   if (e.code==='KeyT') toggleTraffic();
   if (e.code==='KeyG') toggleBeginner();
-  if (e.code==='Enter' && !(e.target && e.target.closest && e.target.closest('button,select,input,a'))) restart();
+  if (e.code==='Enter' && !(e.target && e.target.closest && e.target.closest('button,select,input,a'))) userRestart();
   if (e.code==='Backspace') retryCheckpoint();
   if (e.code==='Escape') closeCpMenu();
   if (e.code==='KeyP' && S.status==='run'){ paused = !paused; if (paused) showOv('pause','Paused','Press P or the button to continue.'); else document.getElementById('ov').hidden = true; }
@@ -1715,7 +1756,7 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; focused 
 addEventListener('focus', () => { focused = true; });
 cv.addEventListener('pointerdown', () => { cv.focus(); focused = true; });
 cv.addEventListener('wheel', e => { e.preventDefault(); zoomMul = Math.min(2.2, Math.max(0.5, zoomMul*(e.deltaY<0?1.1:1/1.1))); }, {passive:false});
-document.getElementById('restart').onclick = () => restart();
+document.getElementById('restart').onclick = () => userRestart();
 document.getElementById('cpBtn').onclick = openCpMenu;
 const gbSel = document.getElementById('gbSel'); gbSel.value = MANUAL ? 'manual' : 'auto';
 function setGearHint(){ document.getElementById('gearHint').innerHTML = MANUAL ? 'Shift + ↑ ↓ to shift' : '<kbd>R</kbd> rev · <kbd>F</kbd> drive'; }
@@ -1738,14 +1779,14 @@ document.getElementById('trafBtn').onclick = () => { toggleTraffic(); cv.focus()
 document.getElementById('bgBtn').onclick = () => { toggleBeginner(); cv.focus(); }; setBgBtn();
 document.getElementById('ovB2').onclick = openCpMenu;
 document.getElementById('cpClose').onclick = closeCpMenu;
-document.getElementById('cpList').onclick = e => { const b = e.target.closest('.cpi'); if (!b) return; if (b.dataset.k==='__restart') restart(); else jumpTo(b.dataset.k); };
+document.getElementById('cpList').onclick = e => { const b = e.target.closest('.cpi'); if (!b) return; if (b.dataset.k==='__restart') userRestart(); else jumpTo(b.dataset.k); };
 document.getElementById('check').onclick = e => { const b = e.target.closest('.prac'); if (b) jumpTo(b.dataset.k); };
 document.getElementById('ovB').onclick = () => {
   const ov = document.getElementById('ov');
   if (ov.classList.contains('brief')) { paused = false; ov.hidden = true; focused = true; cv.focus(); }
   else if (ov.classList.contains('pause')) { paused = false; ov.hidden = true; cv.focus(); }
   else if (ov.classList.contains('focus')) { ov.hidden = true; focused = true; cv.focus(); }
-  else restart();
+  else userRestart();
 };
 let helpTimer = null;
 function hideHelpSoon(){ if (helpTimer) return; helpTimer = setTimeout(()=>{ document.getElementById('help').hidden = true; }, 6000); }
@@ -2920,4 +2961,70 @@ requestAnimationFrame(frame);
 })();
 </script>
 
+<script>
+// Feedback popup: shows after every 3rd user restart until the player sends a rating once.
+window.tpFeedback = (() => {
+  const FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeX5JCKJz8nysczQptAT_mlhZH2z7xA-dbemvRqffus2qCcqA/formResponse';
+  const F_NAME = 'entry.1771444461', F_RATE = 'entry.1737797565', F_TEXT = 'entry.1885023284';
+  const K_N = 'tp-restarts', K_NEXT = 'tp-fb-next', K_DONE = 'tp-fb-done', GAP = 3;
+  const get = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch(e) { return d; } };
+  const set = (k, v) => { try { localStorage.setItem(k, String(v)); } catch(e) {} };
+  const $ = id => document.getElementById(id);
+  const fb = $('fb'), form = $('fbForm'), thanks = $('fbThanks'), stars = $('fbStars'), txt = $('fbTxt'), send = $('fbSend');
+  let rating = 0, lastFocus = null;
+
+  for (let i = 1; i <= 5; i++){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'star'; b.setAttribute('role','radio'); b.setAttribute('aria-checked','false');
+    b.setAttribute('aria-label', i + ' of 5'); b.innerHTML = '★<small>' + i + '</small>';
+    b.onclick = () => { rating = i; [...stars.children].forEach((s, j) => { s.classList.toggle('on', j < i); s.setAttribute('aria-checked', String(j === i - 1)); }); send.disabled = false; };
+    stars.appendChild(b);
+  }
+  // Keep keys typed here away from the driving controls.
+  ['keydown','keyup'].forEach(t => fb.addEventListener(t, e => {
+    e.stopPropagation();
+    if (t === 'keydown' && e.key === 'Escape' && !form.hidden) later();
+  }));
+
+  function open(){
+    rating = 0; txt.value = ''; send.disabled = true; send.textContent = 'Send';
+    [...stars.children].forEach(s => { s.classList.remove('on'); s.setAttribute('aria-checked','false'); });
+    form.hidden = false; thanks.hidden = true; fb.hidden = false;
+    lastFocus = document.activeElement; setTimeout(() => stars.children[0].focus(), 30);
+  }
+  function close(){ fb.hidden = true; const cv = $('cv'); if (cv) cv.focus(); }
+  function later(){ set(K_NEXT, Number(get(K_N, 0)) + GAP); close(); }
+
+  function post(params){
+    const body = new URLSearchParams(params);
+    return fetch(FORM, { method:'POST', mode:'no-cors', body }).catch(() => {
+      try {
+        const f = document.createElement('form'); f.method = 'POST'; f.action = FORM; f.target = 'gateSink'; f.style.display = 'none';
+        for (const [k, v] of body) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); }
+        document.body.appendChild(f); f.submit(); setTimeout(() => f.remove(), 3000);
+      } catch(e) {}
+    });
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!rating) return;
+    send.disabled = true; send.textContent = 'Sending…';
+    const name = get('tp-player', '') || 'Anonymous';
+    const comment = txt.value.replace(/\s+/g, ' ').trim();
+    await Promise.race([post({ [F_NAME]: name, [F_RATE]: String(rating), [F_TEXT]: comment }), new Promise(r => setTimeout(r, 2500))]);
+    set(K_DONE, '1');
+    form.hidden = true; thanks.hidden = false; setTimeout(() => $('fbDone').focus(), 30);
+  });
+  $('fbLater').onclick = later; $('fbX').onclick = later; $('fbDone').onclick = close;
+
+  // Called on each restart the player chooses (button, Enter, overlay, checkpoint menu).
+  function countRestart(){
+    const n = Number(get(K_N, 0)) + 1; set(K_N, n);
+    if (get(K_DONE, '') === '1') return;
+    const tut = $('tut'); if (n >= Number(get(K_NEXT, GAP)) && $('gate').hidden && (!tut || tut.hidden)) open();
+  }
+  return { countRestart, open };
+})();
+</script>
 </body></html>
