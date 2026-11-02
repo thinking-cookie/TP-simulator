@@ -43,6 +43,7 @@ A browser-based trainer that lets learners **drive** the circuit, not just watch
 - **Beginner guide** (off by default, press `G`) — tells you when to get ready to turn, signal and check, when to brake for a line, and when you are too close, plus parking-sensor beeps when reversing
 - **Over-the-shoulder checks** — tap `Q`/`E` for a quick glance, hold to look out of the rear side window
 - **3D kerbs** in the driver's seat and mirrors, traced from the same map used for kerb hits
+- **Steering wheel and pedals, any brand** — Logitech, Thrustmaster, Fanatec, Moza and others. A one-time setup finds your steering, pedals and buttons, so nothing is hard-coded per brand (Chrome or Edge)
 - **Works on desktop and mobile**, single HTML file, no sign-up
 
 | Driver's seat | Night mode |
@@ -88,6 +89,7 @@ This is a simplified practice tool. Real TP test marking covers more items.
 - **Automatic and manual.** Covers both Class 3A (auto) and Class 3 (manual) learners.
 - **Beginner help is opt-in.** The guide and parking beeps are off by default, so learners practise the way the test runs and switch help on only when they need it.
 - **Show where, not just what.** The mistake map ties each fault to a spot on the circuit, so learners know which corner to practise next.
+- **Calibrate, don't hard-code.** Every wheel brand reports steering and pedals on different axes and ranges. Instead of a list of supported models, a guided setup asks you to turn and press each control and learns the mapping, so any wheel the browser can see works.
 
 ## What's next
 

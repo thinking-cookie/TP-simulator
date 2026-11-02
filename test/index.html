@@ -138,6 +138,20 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
 .fb .fine{font-size:11.5px;color:var(--muted)}
 .fb .ok h2{color:var(--ok)}
 .fb .star:focus-visible,.fb textarea:focus-visible,.fb .fbx:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+/* wheel setup */
+.wh .whstep{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.wh .whm{height:10px;border-radius:5px;background:var(--raise);overflow:hidden;position:relative}
+.wh .whm i{position:absolute;inset:0 auto 0 0;width:0;background:var(--sky)}
+.wh .whs{font-size:13px;color:var(--muted);min-height:1.4em}
+.wh .whs.ok{color:var(--ok)} .wh .whs.bad{color:var(--warn)}
+.wh .whtest{display:flex;flex-direction:column;gap:9px}
+.wh .wt{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.wh .wt b{color:var(--fg);font-weight:700}
+.wh .wbar{height:10px;border-radius:5px;background:var(--raise);position:relative;overflow:hidden}
+.wh .wbar i{position:absolute;top:0;bottom:0;left:0;width:0;background:var(--accent)}
+.wh .wbar.ctr::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--muted)}
+.wh .wbar.off{opacity:.3}
+.wh .row .btn{padding:8px 8px}
 /* name gate */
 .gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(10,12,15,.86);backdrop-filter:blur(3px)}
 .gate form{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;width:100%;max-width:360px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
@@ -196,11 +210,12 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
         <div class="k"><kbd>B</kbd></div><div>Driver's seat: 360° camera on the dash screen on / off</div>
         <div class="k"><kbd>T</kbd></div><div>CDC map: other cars and people on / off</div>
         <div class="k"><kbd>G</kbd></div><div>Beginner guide on / off (driver's seat): when to get ready, where to stop, parking sensor beeps</div>
+        <div class="k"><kbd>🎮</kbd></div><div>Steering wheel and pedals: any brand works. Tap the Wheel button once to set it up</div>
       </div>
       <div style="color:var(--muted)">Follow the yellow arrow. Before turning inside a blue dashed zone, signal (<kbd>Z</kbd>/<kbd>X</kbd>) and check your blind spot (<kbd>Q</kbd>/<kbd>E</kbd>). On the CDC map, stop at red lights and STOP lines and give way at the zebra.</div>
     </div>
 
-    <div class="stagebtns"><button class="btn ghost" id="tutBtn" title="Show the controls">⌨ Controls</button><button class="btn ghost" id="bgBtn" title="Turn the beginner guide on (G)" aria-pressed="false">🎓 Guide</button><button class="btn ghost" id="trafBtn" title="Other cars and people on or off (T)" aria-pressed="true" hidden>🚗 Traffic</button><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
+    <div class="stagebtns"><button class="btn ghost" id="tutBtn" title="Show the controls">⌨ Controls</button><button class="btn ghost" id="whBtn" title="Set up a steering wheel and pedals" aria-pressed="false">🎮 Wheel</button><button class="btn ghost" id="bgBtn" title="Turn the beginner guide on (G)" aria-pressed="false">🎓 Guide</button><button class="btn ghost" id="trafBtn" title="Other cars and people on or off (T)" aria-pressed="true" hidden>🚗 Traffic</button><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
 
     <div class="ov" id="cpMenu" hidden>
       <div class="box">
@@ -336,6 +351,25 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
     <h2>Thanks!</h2>
     <p>Got it. Back to the circuit — good luck on your TP.</p>
     <button class="btn" type="button" id="fbDone">Keep driving</button>
+  </div>
+</div>
+<div class="fb wh" id="wh" hidden role="dialog" aria-modal="true" aria-labelledby="whT">
+  <div class="fbox">
+    <button class="fbx" type="button" id="whX" aria-label="Close">×</button>
+    <span class="whstep" id="whStep">Step 1</span>
+    <h2 id="whT">Set up your wheel</h2>
+    <p id="whD"></p>
+    <div class="whm" id="whM"><i></i></div>
+    <div class="whtest" id="whTest" hidden>
+      <div class="wt"><span>Steering</span><div class="wbar ctr"><i id="wtS"></i></div></div>
+      <div class="wt"><span>Accelerator</span><div class="wbar"><i id="wtT"></i></div></div>
+      <div class="wt"><span>Brake</span><div class="wbar"><i id="wtB"></i></div></div>
+      <div class="wt"><span>Clutch</span><div class="wbar"><i id="wtC"></i></div></div>
+      <div class="wt"><span>Last button</span><b id="wtK">Press a mapped button</b></div>
+    </div>
+    <p class="whs" id="whS" aria-live="polite"></p>
+    <div class="row" id="whRow"></div>
+    <span class="fine">Works with any wheel your browser can see: Logitech, Thrustmaster, Fanatec, Moza and others. Use Chrome or Edge. Force feedback isn't available in browsers.</span>
   </div>
 </div>
 <iframe name="gateSink" title="" aria-hidden="true" tabindex="-1" style="display:none"></iframe>
@@ -1793,12 +1827,253 @@ let helpTimer = null;
 function hideHelpSoon(){ if (helpTimer) return; helpTimer = setTimeout(()=>{ document.getElementById('help').hidden = true; }, 6000); }
 document.getElementById('helpX').onclick = () => { document.getElementById('help').hidden = true; cv.focus(); };
 
+// ---------- Steering wheel & pedals ----------
+// Works with any brand (Logitech, Thrustmaster, Fanatec, Moza, no-name). Every wheel shows up in the browser as a
+// game controller, but each brand puts steering and pedals on different axes with different ranges (some pedals rest
+// at -1, some at +1, some share one axis). So nothing is hard-coded: a one-time setup asks the player to move each
+// control, finds the axis or button that moved, and saves that mapping in this browser.
+const Wheel = (() => {
+  const KEY = 'tp-wheel-v1';
+  const ACTIONS = [
+    {k:'up',      n:'Gear up / Drive',        d:'Press the paddle or button you want for shifting up. In automatic it selects Drive (D).'},
+    {k:'down',    n:'Gear down / Reverse',    d:'Press the paddle or button for shifting down. In automatic it selects Reverse (R).'},
+    {k:'sigL',    n:'Left signal',            d:'Press the button you want for the left indicator.'},
+    {k:'sigR',    n:'Right signal',           d:'Press the button you want for the right indicator.'},
+    {k:'lookL',   n:'Check left blind spot',  d:'Hold it to look over your left shoulder.'},
+    {k:'lookR',   n:'Check right blind spot', d:'Hold it to look over your right shoulder.'},
+    {k:'hand',    n:'Handbrake',              d:'Hold it to keep the handbrake on. Use it on the slope.'},
+    {k:'start',   n:'Start engine',           d:'Manual gearbox only. Skip if you only drive automatic.'},
+    {k:'horn',    n:'Horn',                   d:'Optional.'},
+    {k:'restart', n:'Restart run',            d:'Optional.'}
+  ];
+  const PEDAL = {thr:'accelerator', brk:'brake', clu:'clutch'};
+  const STEPS = [
+    {k:'rest',  kind:'rest', t:'Hands and feet off', d:'Let go of the wheel and take your feet off every pedal.'},
+    {k:'left',  kind:'axis', t:'Turn the wheel fully left', d:'All the way to the stop, then back to the centre and let go.'},
+    {k:'right', kind:'axis', t:'Turn the wheel fully right', d:'All the way to the stop, then back to the centre and let go.'},
+    {k:'thr',   kind:'axis', t:'Press the accelerator', d:'Push it to the floor, then let go.'},
+    {k:'brk',   kind:'axis', t:'Press the brake', d:'Push it to the floor, then let go.'},
+    {k:'clu',   kind:'axis', t:'Press the clutch', d:'Push it to the floor, then let go. No clutch pedal? Tap Skip.'},
+    ...ACTIONS.map(a => ({k:a.k, kind:'btn', t:a.n, d:a.d + ' Tap Skip to leave it on the keyboard.'}))
+  ];
+
+  let map = null; try { map = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!map || map.v !== 1) map = null; } catch(e) { map = null; }
+  const st = {steer:null, thr:0, brk:0, clu:null, held:{}};
+  let prev = {};
+
+  // ----- reading the hardware -----
+  const pads = () => { try { return [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean); } catch(e) { return []; } };
+  const padById = id => pads().find(g => g.id === id);
+  const raw = a => { const g = a && padById(a.pad), v = g ? g.axes[a.axis] : undefined; return typeof v === 'number' ? v : null; };
+  // pedal: 0 = up, 1 = floored, whichever way this brand counts. Small deadzone at both ends so a resting foot reads 0.
+  function pedal(a){ const v = raw(a); if (v === null || a.full === a.rest) return null;
+    return Math.min(1, Math.max(0, ((v - a.rest)/(a.full - a.rest) - 0.05)/0.92)); }
+  // steering: -1 = full left, 0 = centre, 1 = full right
+  function steer(s){ const v = raw(s); if (v === null) return null;
+    const d = v - s.center, toR = s.right - s.center, toL = s.left - s.center;
+    let x = Math.sign(d) === Math.sign(toR) ? (toR ? d/toR : 0) : (toL ? -d/toL : 0);
+    if (Math.abs(x) < 0.015) x = 0;   // tiny deadzone so the car sits straight
+    return Math.max(-1, Math.min(1, x)); }
+  function btn(b){ const g = b && padById(b.pad), k = g && g.buttons[b.b]; return !!k && (k.pressed || k.value > 0.5); }
+  const short = id => (id || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/^[0-9a-f]{4}-[0-9a-f]{4}-/i, '').trim().slice(0, 42) || 'Controller';
+  const uses = id => !!(map && map.pads && map.pads.includes(id));
+  const connected = () => !!(map && map.pads && map.pads.some(id => padById(id)));
+
+  // ----- every frame while driving -----
+  const FIRE = {
+    up:      () => MANUAL ? manualShift(1) : shiftGear('D'),
+    down:    () => MANUAL ? manualShift(-1) : shiftGear('R'),
+    sigL:    () => toggleSignal('L'),
+    sigR:    () => toggleSignal('R'),
+    lookL:   () => blindCheck('L'),
+    lookR:   () => blindCheck('R'),
+    hand:    () => { if (S.status==='run') Car.handbrake(true); },
+    start:   () => ignition(),
+    horn:    () => { if (S.status==='run') Car.horn(); },
+    restart: () => userRestart()
+  };
+  function poll(){
+    st.steer = null; st.thr = 0; st.brk = 0; st.clu = null;
+    if (!map || wiz.open){ prev = {}; st.held = {}; return; }
+    st.steer = map.steer ? steer(map.steer) : null;
+    st.thr = (map.thr && pedal(map.thr)) || 0;
+    st.brk = (map.brk && pedal(map.brk)) || 0;
+    st.clu = map.clu ? pedal(map.clu) : null;
+    const now = {}; for (const a of ACTIONS) now[a.k] = !!(map.btn && map.btn[a.k]) && btn(map.btn[a.k]);
+    const live = !tutOpen() && !paused;
+    if (live) for (const a of ACTIONS){
+      if (now[a.k] && !prev[a.k]) FIRE[a.k]();
+      if (a.k === 'hand' && !now.hand && prev.hand && S.status==='run') Car.handbrake(false);
+    }
+    if (st.thr > 0.1 || st.brk > 0.1) hideHelpSoon();
+    st.held = live ? now : {}; prev = now;
+  }
+
+  // ----- setup and test popup -----
+  const $ = id => document.getElementById(id);
+  const wiz = {open:false, mode:'steps', i:0, snap:{}, held:{}, draft:null, work:null, waitRel:false, raf:0, t:0, test:null, bound:false};
+  function bind(){
+    if (wiz.bound) return; wiz.bound = true;
+    const box = $('wh');
+    ['keydown','keyup'].forEach(t => box.addEventListener(t, e => { e.stopPropagation(); if (t === 'keydown' && e.key === 'Escape') close(); }));
+    $('whX').onclick = close;
+  }
+  function open(){
+    bind(); wiz.open = true; $('wh').hidden = false;
+    if (map) showTest(map, true); else startSteps();
+    wiz.t = performance.now(); cancelAnimationFrame(wiz.raf); wiz.raf = requestAnimationFrame(tick);
+  }
+  function close(){ if (!wiz.open) return; wiz.open = false; cancelAnimationFrame(wiz.raf); $('wh').hidden = true; setBtn(); cv.focus(); }
+  function setRow(list){
+    const row = $('whRow'); row.innerHTML = '';
+    list.forEach(([label, fn], i) => { const b = document.createElement('button'); b.type = 'button';
+      b.className = 'btn' + (i < list.length - 1 ? ' ghost' : ''); b.textContent = label; b.onclick = fn; row.appendChild(b); });
+    setTimeout(() => { const l = row.lastChild; if (l && wiz.open) l.focus(); }, 30);
+  }
+  function status(text, kind){ const s = $('whS'); if (s.textContent !== text) s.textContent = text; s.className = 'whs' + (kind ? ' ' + kind : ''); }
+  function meter(f){ $('whM').firstElementChild.style.width = Math.round(Math.min(1, Math.max(0, f))*100) + '%'; }
+
+  function startSteps(){ wiz.mode = 'steps'; wiz.i = 0; wiz.snap = {}; wiz.held = {}; wiz.draft = {v:1, btn:{}}; wiz.waitRel = false; enterStep(); }
+  function enterStep(){
+    const s = STEPS[wiz.i]; wiz.work = {lock:null, ext:0, last:null, still:0, ref:null};
+    $('whStep').textContent = `Step ${wiz.i + 1} of ${STEPS.length}`; $('whT').textContent = s.t; $('whD').textContent = s.d;
+    $('whM').hidden = s.kind === 'btn'; meter(0); $('whTest').hidden = true; status('');
+    setRow(s.kind === 'rest' ? [['Cancel', close]] : [['Start over', startSteps], ['Skip', next]]);
+  }
+  function next(){ if (++wiz.i >= STEPS.length) finish(); else enterStep(); }
+  function finish(){
+    const d = wiz.draft;
+    if (d.left){ const c = d.right ? (d.left.rest + d.right.rest)/2 : d.left.rest;
+      d.steer = {pad:d.left.pad, axis:d.left.axis, center:c, left:d.left.full, right:d.right ? d.right.full : 2*c - d.left.full}; }
+    delete d.left; delete d.right;
+    showTest(d, false);
+  }
+  function showTest(m, saved){
+    wiz.mode = 'test'; wiz.test = m;
+    $('whStep').textContent = saved ? 'Your wheel' : 'Last step';
+    $('whT').textContent = saved ? 'Wheel is set up' : 'Check it works';
+    const missing = [!m.steer && 'steering', !m.thr && 'accelerator', !m.brk && 'brake'].filter(Boolean);
+    $('whD').textContent = 'Turn the wheel and press each pedal. Every bar should go smoothly from empty to full.' +
+      (missing.length ? ` Not set: ${missing.join(', ')}. The keyboard still covers ${missing.length > 1 ? 'them' : 'it'}.` : '');
+    $('whM').hidden = true; $('whTest').hidden = false; $('wtK').textContent = 'Press a mapped button';
+    setRow(saved ? [['Remove', remove], ['Set up again', startSteps], ['Done', close]] : [['Start over', startSteps], ['Save and drive', save]]);
+  }
+  function save(){
+    map = wiz.test; try { localStorage.setItem(KEY, JSON.stringify(map)); } catch(e) {}
+    flash('Wheel saved. The keyboard still works too', 'ok', 2400); close();
+  }
+  function remove(){ map = null; try { localStorage.removeItem(KEY); } catch(e) {} flash('Wheel setup removed', 'info', 1600); close(); }
+
+  function tick(now){
+    if (!wiz.open) return;
+    const dt = Math.min(0.1, Math.max(0, (now - wiz.t)/1000)); wiz.t = now;
+    if (wiz.mode === 'test') testTick(); else stepTick(dt);
+    wiz.raf = requestAnimationFrame(tick);
+  }
+  function setBar(id, v, centred){
+    const i = $(id); i.parentNode.classList.toggle('off', v === null);
+    if (v === null){ i.style.width = '0'; return; }
+    if (centred){ const w = Math.abs(v)*50; i.style.left = (v < 0 ? 50 - w : 50) + '%'; i.style.width = w + '%'; }
+    else { i.style.left = '0'; i.style.width = v*100 + '%'; }
+  }
+  function testTick(){
+    const m = wiz.test;
+    setBar('wtS', m.steer ? steer(m.steer) : null, true);
+    setBar('wtT', m.thr ? pedal(m.thr) : null); setBar('wtB', m.brk ? pedal(m.brk) : null); setBar('wtC', m.clu ? pedal(m.clu) : null);
+    for (const a of ACTIONS) if (m.btn && m.btn[a.k] && btn(m.btn[a.k])) $('wtK').textContent = a.n;
+    const off = (m.pads || []).length && !(m.pads || []).some(id => padById(id));
+    status(off ? 'Wheel not connected. Plug it in, then press any button on it.' : '', off ? 'bad' : '');
+  }
+
+  // Axis already taken by another control? Return a hint, or null if this movement is allowed for step k.
+  function blocked(k, pad, axis, sg){
+    const d = wiz.draft, same = a => a && a.pad === pad && a.axis === axis, dir = a => Math.sign(a.full - a.rest);
+    if (k === 'left') return null;
+    if (k === 'right'){
+      if (!d.left) return null;
+      if (!same(d.left)) return 'That moved something else. Turn the wheel right.';
+      return sg === dir(d.left) ? "That's left. Turn the wheel right." : null;
+    }
+    if (same(d.left)) return "That's the steering. Press the pedal.";
+    for (const p in PEDAL) if (p !== k && same(d[p]) && sg === dir(d[p])) return `That's the ${PEDAL[p]}. Press the ${PEDAL[k]}.`;
+    return null;
+  }
+  function stepTick(dt){
+    const s = STEPS[wiz.i], w = wiz.work, gs = pads();
+    if (s.kind === 'rest'){
+      if (!gs.length){ status('No wheel found yet. Press any button on it: browsers only show a controller after a button press.', 'bad'); meter(0); w.ref = null; return; }
+      const cur = {}; gs.forEach(g => { cur[g.id] = [...g.axes]; });
+      let moved = !w.ref || Object.keys(cur).length !== Object.keys(w.ref).length;
+      if (!moved) for (const id in cur) cur[id].forEach((v, i) => { const r = w.ref[id] && w.ref[id][i]; if (r === undefined || Math.abs(v - r) > 0.06) moved = true; });
+      if (moved){ w.ref = cur; w.still = 0; } else w.still += dt;
+      meter(w.still/1.5); status(`Found: ${gs.map(g => short(g.id)).join(' + ')}. Keep still…`, 'ok');
+      if (w.still >= 1.5){
+        wiz.snap = w.ref; wiz.held = {};
+        gs.forEach(g => { wiz.held[g.id] = new Set(g.buttons.map((b, i) => (b.pressed || b.value > 0.5) ? i : -1).filter(i => i >= 0)); });
+        wiz.draft.pads = gs.map(g => g.id); next();
+      }
+      return;
+    }
+    if (s.kind === 'axis'){
+      if (!w.lock){
+        let best = null, bd = 0.5, hint = '';
+        for (const g of gs){
+          const base = wiz.snap[g.id] || (wiz.snap[g.id] = [...g.axes]);
+          g.axes.forEach((v, i) => { const b0 = base[i] === undefined ? v : base[i], dd = v - b0; if (Math.abs(dd) <= bd) return;
+            const why = blocked(s.k, g.id, i, Math.sign(dd)); if (why){ hint = why; return; }
+            best = {pad:g.id, axis:i, start:b0}; bd = Math.abs(dd); });
+        }
+        if (!best){ status(hint || 'Waiting…', hint ? 'bad' : ''); meter(0); return; }
+        w.lock = best; w.ext = best.start; w.last = null; w.still = 0;
+      }
+      const g = padById(w.lock.pad); if (!g){ w.lock = null; return; }
+      const v = g.axes[w.lock.axis], st0 = w.lock.start;
+      if (Math.abs(v - st0) > Math.abs(w.ext - st0)) w.ext = v;
+      meter(Math.abs(v - st0) / Math.max(1, Math.abs(w.ext - st0)));
+      if (w.last !== null && Math.abs(v - w.last) < 0.015) w.still += dt; else w.still = 0; w.last = v;
+      const travelled = Math.abs(v - w.ext) > 0.6;
+      // Back at rest? Some browsers report an untouched pedal as 0 until it first moves, then its real rest (±1).
+      const home = Math.abs(v - st0) < 0.15 || (st0 === 0 && Math.abs(Math.abs(v) - 1) < 0.06 && Math.sign(v) !== Math.sign(w.ext));
+      if (travelled && home && w.still > 0.4){
+        wiz.draft[s.k] = {pad:w.lock.pad, axis:w.lock.axis, rest:v, full:w.ext}; wiz.snap[w.lock.pad][w.lock.axis] = v; next();
+      } else status(travelled ? 'Got it. Let go and keep still.' : 'Keep going, all the way.', travelled ? 'ok' : '');
+      return;
+    }
+    // button step: the first button pressed that wasn't already held at rest
+    const down = [];
+    for (const g of gs){ const h = wiz.held[g.id] || new Set();
+      g.buttons.forEach((b, i) => { if ((b.pressed || b.value > 0.5) && !h.has(i)) down.push({pad:g.id, b:i}); }); }
+    if (wiz.waitRel){ if (!down.length) wiz.waitRel = false; else return; }
+    if (!down.length){ if (!$('whS').classList.contains('bad')) status('Waiting for a button…'); return; }
+    const p = down[0], used = Object.entries(wiz.draft.btn).find(([, v]) => v.pad === p.pad && v.b === p.b);
+    wiz.waitRel = true;
+    if (used){ status(`That button is already "${ACTIONS.find(a => a.k === used[0]).n}". Pick another, or Skip.`, 'bad'); return; }
+    wiz.draft.btn[s.k] = p; next();
+  }
+
+  // ----- toolbar button and plug events -----
+  function setBtn(){ const b = $('whBtn'); if (!b) return; const on = connected();
+    b.setAttribute('aria-pressed', String(on)); b.title = map ? (on ? 'Wheel connected. Test or set it up again' : 'Wheel set up but not connected') : 'Set up a steering wheel and pedals'; }
+  addEventListener('gamepadconnected', e => {
+    if (uses(e.gamepad.id)) flash('Wheel connected', 'ok', 1400);
+    else if (!map) flash('Controller found. Tap 🎮 Wheel to set it up', 'info', 3200);
+    setBtn();
+  });
+  addEventListener('gamepaddisconnected', e => { if (uses(e.gamepad.id)) flash('Wheel disconnected. Keyboard still works', 'bad', 2400); setBtn(); });
+  const b = $('whBtn'); if (b) b.onclick = open;
+  setBtn();
+
+  return { st, poll, open, isOpen: () => wiz.open };
+})();
+
 // ---------- Physics ----------
 function physics(dt){
   const c = S.car;
   const clutchKey = MANUAL && (keys.ShiftLeft || keys.ShiftRight);
-  const up = keys.KeyW || (keys.ArrowUp && !clutchKey), dn = keys.KeyS || (keys.ArrowDown && !clutchKey), lf = keys.KeyA||keys.ArrowLeft, rt = keys.KeyD||keys.ArrowRight, hb = keys.Space;
-  if (lf && !rt) c.steer = Math.max(-MAXS, c.steer - STEER_RATE*dt);
+  const up = keys.KeyW || (keys.ArrowUp && !clutchKey), dn = keys.KeyS || (keys.ArrowDown && !clutchKey), lf = keys.KeyA||keys.ArrowLeft, rt = keys.KeyD||keys.ArrowRight, hb = keys.Space || Wheel.st.held.hand;
+  const WS = Wheel.st, thrA = Math.max(up ? 1 : 0, WS.thr), brkA = Math.max(dn ? 1 : 0, WS.brk);   // pedals are analogue; keys are full
+  if (WS.steer !== null && !lf && !rt) c.steer = WS.steer*MAXS;   // wheel: car's wheels follow yours directly
+  else if (lf && !rt) c.steer = Math.max(-MAXS, c.steer - STEER_RATE*dt);
   else if (rt && !lf) c.steer = Math.min(MAXS, c.steer + STEER_RATE*dt);
   else { const r = RETURN*dt; c.steer = Math.abs(c.steer)<=r ? 0 : c.steer - Math.sign(c.steer)*r; }
   if (S.signal){ const s = c.steer*(S.signal==='L' ? -1 : 1); if (s > 0.4*MAXS) S.sigArmed = true; else if (S.sigArmed && s < 0.08*MAXS){ S.signal = null; S.sigArmed = false; } }
@@ -1808,15 +2083,15 @@ function physics(dt){
   let a = 0, f = ROLL, braking = false;
   if (MANUAL){
     a += manualDrive(dt, up, clutchKey);
-    if (dn){ f += BRAKE; braking = true; }
+    if (brkA > 0.02){ f += BRAKE*brkA; braking = true; }
   } else if (c.gear==='D'){
-    if (up){ if (c.v < VMAX) a += ACC*(1 - Math.max(0,c.v)/VMAX*0.6); }
-    else if (!dn && c.v < CREEP) a += CREEP_A;
-    if (dn){ f += BRAKE; braking = true; }
+    if (thrA > 0.02){ if (c.v < VMAX) a += ACC*thrA*(1 - Math.max(0,c.v)/VMAX*0.6); }
+    else if (brkA <= 0.02 && c.v < CREEP) a += CREEP_A;
+    if (brkA > 0.02){ f += BRAKE*brkA; braking = true; }
   } else {
-    if (up){ if (c.v > -VREV) a -= REV_ACC; }
-    else if (!dn && c.v > -CREEP) a -= CREEP_A;
-    if (dn){ f += BRAKE; braking = true; }
+    if (thrA > 0.02){ if (c.v > -VREV) a -= REV_ACC*thrA; }
+    else if (brkA <= 0.02 && c.v > -CREEP) a -= CREEP_A;
+    if (brkA > 0.02){ f += BRAKE*brkA; braking = true; }
   }
   if (hb) f += HAND;
   S.braking = braking || hb; S.hand = !!hb;
@@ -1849,9 +2124,10 @@ function manualDrive(dt, up, clutchKey){
   // pedal: 0 = pressed to the floor, 1 = fully up. Shift presses it; V holds it at the biting point.
   if (clutchKey) E.pedal = Math.max(0, E.pedal - dt/0.12);
   else if (keys.KeyV){ const tgt = (BITE_LO+BITE_HI)/2; E.pedal += Math.sign(tgt-E.pedal)*Math.min(Math.abs(tgt-E.pedal), dt/0.35); }
+  else if (Wheel.st.clu !== null) E.pedal = 1 - Wheel.st.clu;   // real clutch pedal: your foot sets it directly
   else E.pedal = Math.min(1, E.pedal + dt/CLUTCH_UP);
   E.hold = !!keys.KeyV;
-  E.thr = up ? Math.min(1, E.thr + dt*1.4) : Math.max(0, E.thr - dt*4);
+  E.thr = Math.max(up ? Math.min(1, E.thr + dt*1.4) : Math.max(0, E.thr - dt*4), Wheel.st.thr);
   let eg = Math.min(1, Math.max(0, (E.pedal-BITE_LO)/(BITE_HI-BITE_LO))); eg = eg*eg*(3-2*eg); E.eg = eg;
   // starter motor
   if (E.crank > 0){ E.crank -= dt; E.rpm = 220; if (E.crank <= 0){ E.on = true; E.rpm = 950; flash('Engine started', 'ok', 1000); } }
@@ -2409,7 +2685,7 @@ function renderDriver(now){
   const c = S.car;
   // head turn when checking blind spots
   // tap Q / E: a quick glance. Hold: turn over that shoulder and keep looking. A damped spring eases the head so it never snaps.
-  const hL = keys.KeyQ && !keys.KeyE, hR = keys.KeyE && !keys.KeyQ, held = (hL || hR) && S.status==='run' && !paused;
+  const qL = keys.KeyQ || Wheel.st.held.lookL, qR = keys.KeyE || Wheel.st.held.lookR, hL = qL && !qR, hR = qR && !qL, held = (hL || hR) && S.status==='run' && !paused;
   const ldt = Math.min(0.05, Math.max(0, (now - lookLast)/1000)); lookLast = now;
   if (held){ const sd = hL ? -1 : 1; if (sd !== lookSide || !wasHeld){ lookSide = sd; holdT = 0; } holdT += ldt; wasHeld = true; lookPress = null; }
   else if (wasHeld){ wasHeld = false; lookTap = holdT > 0.35 ? 0 : Math.max(0.1, 0.45 - holdT); holdT = 0; }
@@ -2739,14 +3015,15 @@ function updatePanel(){
 }
 
 // ---------- Loop ----------
-function tutOpen(){ const t = document.getElementById('tut'), g = document.getElementById('gate'); return (!!t && !t.hidden) || (!!g && !g.hidden); }   // name box or controls popup open: game waits
+function tutOpen(){ const t = document.getElementById('tut'), g = document.getElementById('gate'); return (!!t && !t.hidden) || (!!g && !g.hidden) || Wheel.isOpen(); }   // name box or controls popup open: game waits
 let last = performance.now();
 function frame(now){
   const dt = Math.max(0, Math.min(0.05, (now-last)/1000)); last = now;   // never step time backwards
+  Wheel.poll();
   if (S.status==='run' && !paused && focused && !tutOpen()){
     S.t += dt;
     const n = 4; for (let i=0;i<n && S.status==='run';i++) physics(dt/n);
-    if (keys.KeyQ) S.lastCheck.L = S.t; if (keys.KeyE) S.lastCheck.R = S.t;   // holding the key keeps the check fresh
+    if (keys.KeyQ || Wheel.st.held.lookL) S.lastCheck.L = S.t; if (keys.KeyE || Wheel.st.held.lookR) S.lastCheck.R = S.t;   // holding the key keeps the check fresh
     if (S.status==='run') rules(dt);
     if (S.status==='run' && ROAD){ trafficStep(dt); if (S.status==='run') roadRules(dt); }
     bgUpdate(dt);
