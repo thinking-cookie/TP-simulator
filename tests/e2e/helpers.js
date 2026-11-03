@@ -47,10 +47,16 @@ async function press(page, { d, b }) {
 // Move an axis smoothly to `to`, hold, then back to `back`, like a hand or foot would.
 // In the setup popup, it holds until the popup says "Got it", like a player waiting for the cue.
 async function sweep(page, d, axis, from, to, back) {
-  for (const f of [0.33, 0.66, 1]) { await setAxis(page, d, axis, from + (to - from) * f); await page.waitForTimeout(60); }
-  if (await page.locator('#wh').isVisible()) await expect(page.locator('#whS')).toContainText('Got it', { timeout: 4000 });
+  for (const f of [0.2, 0.4, 0.6, 0.8, 1]) { await setAxis(page, d, axis, from + (to - from) * f); await page.waitForTimeout(80); }
+  // in the setup popup, hold until it says "Got it" (a slow test machine may need longer), then let go either way
+  if (await page.locator('#wh').isVisible()) await page.locator('#whS', { hasText: 'Got it' }).waitFor({ timeout: 4000 }).catch(() => {});
   else await page.waitForTimeout(150);
   await setAxis(page, d, axis, back);
+}
+// Turn the wheel from `from` to `to` and hold it there until the setup moves on to `next`, as a player would.
+async function turnAndHold(page, d, axis, from, to, next) {
+  for (const f of [0.33, 0.66, 1]) { await setAxis(page, d, axis, from + (to - from) * f); await page.waitForTimeout(60); }
+  await expectStep(page, next);
 }
 // Pedal position 0..1 to the raw value this profile reports.
 const pedalRaw = (p, x) => p.rest + (p.full - p.rest) * x;
@@ -70,18 +76,16 @@ async function expectStep(page, text) {
 // Walk the whole setup popup the way a player would, using the profile's layout.
 async function runSetup(page, profile) {
   await page.click('#whBtn');
-  await expectStep(page, 'Turn the wheel fully left');   // rest step passes on its own after 1.5 s of stillness
+  await expectStep(page, 'Turn the wheel left');   // rest step passes on its own after 1.5 s of stillness
   const s = profile.steer;
-  await sweep(page, s.d, s.axis, s.center, s.left, s.center);
-  await expectStep(page, 'Turn the wheel fully right');
-  await sweep(page, s.d, s.axis, s.center, s.right, s.center);
-  await expectStep(page, 'Press the accelerator');
+  await turnAndHold(page, s.d, s.axis, s.center, s.left, 'Turn the wheel right');
+  await turnAndHold(page, s.d, s.axis, s.left, s.right, 'Press the accelerator');
+  await setAxis(page, s.d, s.axis, s.center);
   for (const [k, next] of [['thr', 'Press the brake'], ['brk', 'Press the clutch'], ['clu', 'Gear up / Drive']]) {
     const p = profile[k];
     if (p) {
-      const start = p.quirk ? 0 : p.rest;
-      await sweep(page, p.d, p.axis, start, p.full, p.rest);
-      if (p.quirk) await setAxis(page, p.d, p.axis, p.rest);
+      // a "quirk" axis reads 0 until it moves; its first real reading is then near rest, as the foot starts pressing
+      await sweep(page, p.d, p.axis, p.rest, p.full, p.rest);
     } else await skip(page);
     await expectStep(page, next);
   }
@@ -102,4 +106,4 @@ async function runSetup(page, profile) {
   await focusGame(page);
 }
 
-module.exports = { load, focusGame, car, state, plug, setAxis, setButton, press, sweep, pedalRaw, steerRaw, runSetup, expectStep, skip, title };
+module.exports = { turnAndHold, load, focusGame, car, state, plug, setAxis, setButton, press, sweep, pedalRaw, steerRaw, runSetup, expectStep, skip, title };

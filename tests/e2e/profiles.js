@@ -13,6 +13,16 @@ const BUTTONS = {
 };
 
 module.exports = {
+  // Wheel that counts the other way (turning left raises the number).
+  inverted: {
+    name: 'steering counts the other way',
+    devices: [{ id: 'Generic Wheel (Vendor: 1111 Product: 2222)', axes: [0, 1, 1] }],
+    steer: { d: 0, axis: 0, left: 1, right: -1, center: 0 },
+    thr: { d: 0, axis: 1, rest: 1, full: -1 },
+    brk: { d: 0, axis: 2, rest: 1, full: -1 },
+    clu: null,
+    buttons: { up: { d: 0, b: 4 }, down: { d: 0, b: 5 }, sigL: { d: 0, b: 0 }, sigR: { d: 0, b: 1 } }
+  },
   // Pedals rest at +1 and go to -1, and read 0 until first touched.
   splitQuirk: {
     name: 'split pedals, rest +1, zero until touched',
@@ -43,14 +53,14 @@ module.exports = {
     clu: null,
     buttons: { up: { d: 0, b: 4 }, down: { d: 0, b: 5 }, sigL: { d: 0, b: 0 }, sigR: { d: 0, b: 1 } }
   },
-  // Wheel base and pedals are two separate USB devices. Steering only reaches ±0.8 of the range.
+  // Wheel base and pedals are two separate USB devices.
   pedalBox: {
-    name: 'separate pedal box, reduced steering range',
+    name: 'separate pedal box',
     devices: [
       { id: 'FANATEC CSL DD Wheel Base (Vendor: 0eb7 Product: 0020)', axes: [0, 0, 0] },
       { id: 'FANATEC CSL Pedals (Vendor: 0eb7 Product: 6204)', axes: [0, 0, 0] }
     ],
-    steer: { d: 0, axis: 0, left: -0.8, right: 0.8, center: 0 },
+    steer: { d: 0, axis: 0, left: -1, right: 1, center: 0 },
     thr: { d: 1, axis: 0, rest: 0, full: 1 },
     brk: { d: 1, axis: 1, rest: 0, full: 1 },
     clu: { d: 1, axis: 2, rest: 0, full: 1 },

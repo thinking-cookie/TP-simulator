@@ -1926,11 +1926,11 @@ const Wheel = (() => {
   const PEDAL = {thr:'accelerator', brk:'brake', clu:'clutch'};
   const STEPS = [
     {k:'rest',  kind:'rest', t:'Hands and feet off', d:'Let go of the wheel and take your feet off every pedal.'},
-    {k:'left',  kind:'axis', t:'Turn the wheel fully left', d:'All the way to the stop, then back to the centre and let go.'},
-    {k:'right', kind:'axis', t:'Turn the wheel fully right', d:'All the way to the stop, then back to the centre and let go.'},
-    {k:'thr',   kind:'axis', t:'Press the accelerator', d:'Push it to the floor, then let go.'},
-    {k:'brk',   kind:'axis', t:'Press the brake', d:'Push it to the floor, then let go.'},
-    {k:'clu',   kind:'axis', t:'Press the clutch', d:'Push it to the floor, then let go. No clutch pedal? Tap Skip.'},
+    {k:'left',  kind:'axis', t:'Turn the wheel left', d:'Turn it well to the left and hold it there for a moment. No need to come back to the centre.'},
+    {k:'right', kind:'axis', t:'Turn the wheel right', d:'Now turn it well to the right and hold it there for a moment.'},
+    {k:'thr',   kind:'axis', t:'Press the accelerator', d:'Push it down, then let go.'},
+    {k:'brk',   kind:'axis', t:'Press the brake', d:'Push it down, then let go.'},
+    {k:'clu',   kind:'axis', t:'Press the clutch', d:'Push it down, then let go. No clutch pedal? Tap Skip.'},
     ...ACTIONS.map(a => ({k:a.k, kind:'btn', t:a.n, d:a.d + ' Tap Skip to leave it on the keyboard.'}))
   ];
 
@@ -2032,7 +2032,7 @@ const Wheel = (() => {
 
   function startSteps(){ wiz.mode = 'steps'; wiz.i = 0; wiz.snap = {}; wiz.held = {}; wiz.draft = {v:1, btn:{}}; wiz.waitRel = false; enterStep(); }
   function enterStep(){
-    const s = STEPS[wiz.i]; wiz.work = {lock:null, ext:0, last:null, still:0, ref:null}; layout('steps');
+    const s = STEPS[wiz.i]; wiz.work = {tr:{}, key:null, last:null, still:0, ref:null, t:0}; layout('steps');
     $('whStep').textContent = `Step ${wiz.i + 1} of ${STEPS.length}`; $('whT').textContent = s.t; $('whD').textContent = s.d;
     $('whM').hidden = s.kind === 'btn'; meter(0); $('whTest').hidden = true; status('');
     setRow(s.kind === 'rest' ? [['Cancel', close]] : [['Start over', startSteps], ['Skip', next]]);
@@ -2040,7 +2040,7 @@ const Wheel = (() => {
   function next(){ if (++wiz.i >= STEPS.length) finish(); else enterStep(); }
   function finish(){
     const d = wiz.draft;
-    if (d.left){ const c = d.right ? (d.left.rest + d.right.rest)/2 : d.left.rest;
+    if (d.left){ const c = d.left.rest;   // the wheel's position in the "hands off" step
       d.steer = {pad:d.left.pad, axis:d.left.axis, center:c, left:d.left.full, right:d.right ? d.right.full : 2*c - d.left.full}; }
     delete d.left; delete d.right;
     showTest(d, false);
@@ -2146,18 +2146,105 @@ const Wheel = (() => {
     status(off ? 'Wheel not connected. Plug it in, then press any button on it.' : '', off ? 'bad' : '');
   }
 
-  // Axis already taken by another control? Return a hint, or null if this movement is allowed for step k.
-  function blocked(k, pad, axis, sg){
-    const d = wiz.draft, same = a => a && a.pad === pad && a.axis === axis, dir = a => Math.sign(a.full - a.rest);
-    if (k === 'left') return null;
-    if (k === 'right'){
-      if (!d.left) return null;
-      if (!same(d.left)) return 'That moved something else. Turn the wheel right.';
-      return sg === dir(d.left) ? "That's left. Turn the wheel right." : null;
+
+  // ----- axis steps: steering and pedals -----
+  // Every axis on every device is tracked from the start of the step (lowest and highest value seen). The axis that
+  // moved most, and isn't already taken, is the one. Forgiving on purpose:
+  //  - steering: turn well left (or right) and hold still. The wheel's end stops are taken as ±1, which is how
+  //    browsers scale every wheel, so a partial turn never makes the steering twitchy. No need to come back.
+  //  - pedals: push down and let go. Any travel over 15% counts. Pedals that the browser shows only once they move,
+  //    or that read 0 until first touched, are handled by looking at where the movement started.
+  function axisStep(s, w, gs, dt){
+    const d = wiz.draft, steerStep = s.k === 'left' || s.k === 'right';
+    w.t += dt;
+    const same = (a, pad, i) => a && a.pad === pad && a.axis === i;
+    const known = (pad, i) => ['left', ...Object.keys(PEDAL)].some(k => same(d[k], pad, i));
+    // Is the start value real? A browser can report an untouched pedal as exactly 0 until it moves, then jump to its
+    // real rest (often ±1). A start of 0 is trusted only once the axis is already mapped, or comes back to 0.
+    const trustedAt = (t, b, pad, i) => Math.abs(b) > 0.02 || known(pad, i) || (t && t.zero);
+    for (const g of gs){
+      const base = wiz.snap[g.id] || (wiz.snap[g.id] = [...g.axes]);   // a device seen for the first time: its first reading
+      const tr = w.tr[g.id] || (w.tr[g.id] = []);
+      g.axes.forEach((v, i) => {
+        if (typeof v !== 'number') return;
+        const b = base[i] ?? v;
+        let t = tr[i];
+        if (!t){ t = tr[i] = {min:Infinity, max:-Infinity, first:null, bad:false, zero:false};
+          // a known resting value counts as seen, so a move that happened before this step's first frame isn't missed
+          if (trustedAt(null, b, g.id, i)){ t.min = Math.min(b, v); t.max = Math.max(b, v); } }
+        if (Math.abs(v) > 1.01) t.bad = true;   // hat switches rest outside -1..1: never a pedal or steering
+        if (t.first === null && Math.abs(v - b) > 0.02) t.first = v;
+        if (t.first === null && !trustedAt(t, b, g.id, i)) return;   // untouched, maybe hiding its real rest: ignore its 0
+        if (t.first !== null && Math.abs(v) < 0.05 && Math.abs(b) <= 0.02) t.zero = true;
+        if (v < t.min) t.min = v; if (v > t.max) t.max = v;
+      });
     }
-    if (same(d.left)) return "That's the steering. Press the pedal.";
-    for (const p in PEDAL) if (p !== k && same(d[p]) && sg === dir(d[p])) return `That's the ${PEDAL[p]}. Press the ${PEDAL[k]}.`;
-    return null;
+    let best = null;
+    // a movement that belongs to another control: say so, and forget it so it can't skew this step
+    const wrong = (tr, i, v, msg) => { w.hint = {msg, until: w.t + 2.5}; tr[i] = {min:v, max:v, first:v, bad:false, zero:false}; };
+    for (const g of gs){
+      const base = wiz.snap[g.id], tr = w.tr[g.id] || [];
+      tr.forEach((t, i) => {
+        if (!t || t.bad) return;
+        const now = g.axes[i];
+        if (steerStep){
+          const c = d.left ? d.left.rest : base[i];
+          if (d.left && !same(d.left, g.id, i)){ if (t.first !== null && Math.abs(now - (base[i] ?? now)) > 0.3) wrong(tr, i, now, 'That moved something else. Turn the wheel.'); return; }
+          // left step: whichever way the number moves is "left" (some wheels count the other way).
+          // right step: the opposite of left.
+          const dirn = d.left ? -Math.sign(d.left.full - d.left.rest) : (t.max - c >= c - t.min ? 1 : -1);
+          const ext = dirn < 0 ? t.min : t.max, r = (ext - c)*dirn;
+          if (r < 0.2 || (best && r <= best.r)) return;
+          best = {pad:g.id, axis:i, r, rest:c, full:dirn, v:g.axes[i]};   // browsers scale every wheel to ±1 at its end stops
+        } else {
+          const r = t.max - t.min; if (!(r >= 0.3) || (best && r <= best.r)) return;
+          const ref = trustedAt(t, base[i] ?? 0, g.id, i) ? (base[i] ?? 0) : (t.first ?? base[i] ?? 0);
+          const rest = Math.abs(ref - t.min) <= Math.abs(ref - t.max) ? t.min : t.max, full = rest === t.min ? t.max : t.min;
+          const sg = Math.sign(full - rest);
+          if (same(d.left, g.id, i)){ wrong(tr, i, now, "That's the steering. Press the pedal."); return; }
+          for (const p in PEDAL) if (p !== s.k && same(d[p], g.id, i) && sg === Math.sign(d[p].full - d[p].rest)){ wrong(tr, i, now, `That's the ${PEDAL[p]}. Press the ${PEDAL[s.k]}.`); return; }
+          best = {pad:g.id, axis:i, r, rest, full: Math.abs(full) > 0.9 ? Math.sign(full) : full, v:g.axes[i]};
+        }
+      });
+    }
+    if (!best){
+      meter(0); w.still = 0; w.key = null;
+      if (w.hint && w.t < w.hint.until) status(w.hint.msg, 'bad');   // keep a "that's the wrong control" hint up long enough to read
+      else if (w.t > 6) status('Not picking it up? What your browser sees right now: ' + liveAxes(gs) + '. Tap Skip to use the keyboard for this one.', 'bad');
+      else status(steerStep ? 'Waiting… turn it well over.' : 'Waiting… push the pedal down.');
+      return;
+    }
+    const key = best.pad + '#' + best.axis;
+    if (key !== w.key){ w.key = key; w.still = 0; w.last = null; w.bottom = false; }
+    const v = best.v;
+    if (w.last !== null && Math.abs(v - w.last) < 0.02) w.still += dt; else w.still = 0; w.last = v;
+    if (steerStep){
+      meter(Math.min(1, w.still/0.35));
+      if (w.still >= 0.35 && Math.abs(v - best.rest) >= 0.15){
+        d[s.k] = {pad:best.pad, axis:best.axis, rest:best.rest, full:best.full}; next(); return;
+      }
+      status(w.still > 0.05 ? 'Got it. Hold it there…' : 'Keep turning, then hold still.', w.still > 0.05 ? 'ok' : '');
+      return;
+    }
+    const released = Math.abs(v - best.rest) <= 0.2*best.r;
+    // "all the way down": at the end of the range (±1), or held still well away from rest
+    if (!released && (Math.abs(best.full) >= 0.9 && Math.abs(v - best.full) < 0.1 || w.still >= 0.3)) w.bottom = true;
+    meter(released ? Math.min(1, w.still/0.35) : Math.abs(v - best.rest)/Math.max(0.01, best.r));
+    if (released && w.still >= 0.35){
+      d[s.k] = {pad:best.pad, axis:best.axis, rest:best.rest, full:best.full}; wiz.snap[best.pad][best.axis] = best.rest; next(); return;
+    }
+    // Sitting still at the other end for 2 s after "now let go"? Then that end is where the pedal rests (a browser
+    // that hid the pedal until it moved can make the first guess wrong). Swap and finish.
+    if (!released && Math.abs(v - best.full) <= 0.2*best.r && w.still >= 2){
+      const rest = Math.abs(best.full) > 0.9 ? Math.sign(best.full) : best.full, full = best.rest;
+      d[s.k] = {pad:best.pad, axis:best.axis, rest, full}; wiz.snap[best.pad][best.axis] = rest; next(); return;
+    }
+    status(released ? 'Got it. Keep your foot off…' : w.bottom ? 'Got it. Now let go.' : 'Keep pushing, all the way down.', released || w.bottom ? 'ok' : '');
+  }
+  // compact text of every axis that isn't resting, so a player can show what their pedals report
+  function liveAxes(gs){
+    const parts = gs.map(g => short(g.id) + ': ' + g.axes.map((v, i) => `axis ${i} ${v.toFixed(2)}`).join(', '));
+    return parts.join(' | ') || 'no controller';
   }
   function stepTick(dt){
     const s = STEPS[wiz.i], w = wiz.work, gs = pads();
@@ -2175,32 +2262,7 @@ const Wheel = (() => {
       }
       return;
     }
-    if (s.kind === 'axis'){
-      if (!w.lock){
-        let best = null, bd = 0.5, hint = '';
-        for (const g of gs){
-          const base = wiz.snap[g.id] || (wiz.snap[g.id] = [...g.axes]);
-          g.axes.forEach((v, i) => { const b0 = base[i] === undefined ? v : base[i], dd = v - b0; if (Math.abs(dd) <= bd) return;
-            const why = blocked(s.k, g.id, i, Math.sign(dd)); if (why){ hint = why; return; }
-            best = {pad:g.id, axis:i, start:b0}; bd = Math.abs(dd); });
-        }
-        if (!best){ status(hint || 'Waiting…', hint ? 'bad' : ''); meter(0); return; }
-        w.lock = best; w.ext = best.start; w.last = null; w.still = 0;
-      }
-      const g = padById(w.lock.pad); if (!g){ w.lock = null; return; }
-      const v = g.axes[w.lock.axis], st0 = w.lock.start;
-      if (Math.abs(v - st0) > Math.abs(w.ext - st0)) w.ext = v;
-      meter(Math.abs(v - st0) / Math.max(1, Math.abs(w.ext - st0)));
-      if (w.last !== null && Math.abs(v - w.last) < 0.015) w.still += dt; else w.still = 0; w.last = v;
-      const travelled = Math.abs(v - w.ext) > 0.6;
-      // Back at rest? Some browsers report an untouched pedal as 0 until it first moves, then its real rest (±1).
-      const home = Math.abs(v - st0) < 0.15 || (st0 === 0 && Math.abs(Math.abs(v) - 1) < 0.06 && Math.sign(v) !== Math.sign(w.ext));
-      if (travelled && home && w.still > 0.4){
-        wiz.draft[s.k] = {pad:w.lock.pad, axis:w.lock.axis, rest:v, full:w.ext}; wiz.snap[w.lock.pad][w.lock.axis] = v; next();
-      } else { const got = travelled || Math.abs(v - st0) >= 0.75;   // far enough: tell them now, not only after they let go
-        status(got ? 'Got it. Let go and keep still.' : 'Keep going, all the way.', got ? 'ok' : ''); }
-      return;
-    }
+    if (s.kind === 'axis'){ axisStep(s, w, gs, dt); return; }
     // button step: the first button pressed that wasn't already held at rest
     const down = [];
     for (const g of gs){ const h = wiz.held[g.id] || new Set();

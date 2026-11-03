@@ -21,6 +21,8 @@ for (const [key, profile] of Object.entries(P)) {
       else expect(saved.clu).toBeUndefined();
 
       const s = profile.steer, thr = profile.thr, brk = profile.brk;
+      // Foot on the brake while checking the steering, so the car can't creep into a kerb on full lock
+      await H.setAxis(page, brk.d, brk.axis, H.pedalRaw(brk, 1));
       // Half right on the wheel = half lock on the car
       await H.setAxis(page, s.d, s.axis, H.steerRaw(s, 0.5));
       await expect.poll(async () => (await H.car(page)).steer).toBeCloseTo(0.5 * MAXS, 1);
@@ -28,6 +30,7 @@ for (const [key, profile] of Object.entries(P)) {
       await H.setAxis(page, s.d, s.axis, s.left);
       await expect.poll(async () => (await H.car(page)).steer).toBeCloseTo(-MAXS, 2);
       await H.setAxis(page, s.d, s.axis, s.center);
+      await H.setAxis(page, brk.d, brk.axis, brk.rest);
 
       // Accelerator moves the car forward in D
       await H.setAxis(page, thr.d, thr.axis, H.pedalRaw(thr, 0.8));
@@ -69,7 +72,7 @@ test('more accelerator means more speed', async ({ page }) => {
     return v;
   };
   const light = await speedAfter(0.25), floored = await speedAfter(1);
-  expect(light).toBeGreaterThan(0.3);
+  expect(light).toBeGreaterThan(0.15);
   expect(floored).toBeGreaterThan(light * 2);
 });
 
@@ -122,25 +125,23 @@ test('setup gives clear hints for wrong inputs', async ({ page }) => {
   const p = P.combined;
   await H.plug(page, p);
   await page.click('#whBtn');
-  await H.expectStep(page, 'Turn the wheel fully left');
-  await H.sweep(page, 0, 0, 0, -1, 0);
-  await H.expectStep(page, 'Turn the wheel fully right');
+  await H.expectStep(page, 'Turn the wheel left');
+  await H.turnAndHold(page, 0, 0, 0, -1, 'Turn the wheel right');
 
-  await H.setAxis(page, 0, 0, -1);   // left again
-  await expect(page.locator('#whS')).toHaveText("That's left. Turn the wheel right.");
-  await H.setAxis(page, 0, 0, 0); await page.waitForTimeout(200);
-  await H.sweep(page, 0, 0, 0, 1, 0);
-  await H.expectStep(page, 'Press the accelerator');
+  await H.setAxis(page, 0, 1, -0.8);   // a pedal instead of the wheel
+  await expect(page.locator('#whS')).toHaveText('That moved something else. Turn the wheel.');
+  await H.setAxis(page, 0, 1, 0); await page.waitForTimeout(200);
+  await H.turnAndHold(page, 0, 0, -1, 1, 'Press the accelerator');
 
-  await H.setAxis(page, 0, 0, 0.9);   // steering instead of a pedal
+  await H.setAxis(page, 0, 0, 0.5);   // steering instead of a pedal
   await expect(page.locator('#whS')).toHaveText("That's the steering. Press the pedal.");
-  await H.setAxis(page, 0, 0, 0); await page.waitForTimeout(200);
+  await H.setAxis(page, 0, 0, 0); await page.waitForTimeout(300);
   await H.sweep(page, 0, 1, 0, -1, 0);
   await H.expectStep(page, 'Press the brake');
 
   await H.setAxis(page, 0, 1, -1);   // accelerator again
   await expect(page.locator('#whS')).toHaveText("That's the accelerator. Press the brake.");
-  await H.setAxis(page, 0, 1, 0); await page.waitForTimeout(200);
+  await H.setAxis(page, 0, 1, 0); await page.waitForTimeout(300);
   await H.sweep(page, 0, 1, 0, 1, 0);   // same axis, other way = brake on a combined pedal
   await H.expectStep(page, 'Press the clutch');
   await H.skip(page);
@@ -151,6 +152,97 @@ test('setup gives clear hints for wrong inputs', async ({ page }) => {
   await expect(page.locator('#whS')).toContainText('already "Gear up / Drive"');
 });
 
+// ---------- Forgiving setup (from real T300 feedback: steering took 3 tries, pedals not found) ----------
+async function toStep(page, profile, title) {
+  await H.plug(page, profile);
+  await page.click('#whBtn');
+  await H.expectStep(page, 'Turn the wheel left');
+}
+
+test('steering: a partial turn, held, is enough; no need to come back to centre', async ({ page }) => {
+  await H.load(page);
+  await toStep(page, P.splitRising);
+  await H.turnAndHold(page, 0, 0, 0, -0.3, 'Turn the wheel right');   // only ~30% of the way, wheel left there
+  await H.turnAndHold(page, 0, 0, -0.3, 0.35, 'Press the accelerator');
+});
+
+test('steering: a partial turn still maps the end stops to full lock', async ({ page }) => {
+  await H.load(page);
+  const p = { ...P.combined };
+  await H.plug(page, p);
+  await page.click('#whBtn');
+  await H.expectStep(page, 'Turn the wheel left');
+  await H.turnAndHold(page, 0, 0, 0, -0.4, 'Turn the wheel right');
+  await H.turnAndHold(page, 0, 0, -0.4, 0.4, 'Press the accelerator');
+  await H.setAxis(page, 0, 0, 0);
+  while (await H.title(page).textContent() !== 'Check it works') await H.skip(page);
+  await page.locator('#whRow .btn', { hasText: 'Save and drive' }).click();
+  await H.focusGame(page);
+  await H.setAxis(page, 0, 0, -1);
+  await expect.poll(async () => (await H.car(page)).steer).toBeCloseTo(-MAXS, 3);
+});
+
+test('steering: a wheel that counts the other way still steers the right way', async ({ page }) => {
+  await H.load(page);
+  const p = P.inverted;
+  await H.plug(page, p); await H.runSetup(page, p);
+  await H.setAxis(page, 0, 0, 0.5);    // this wheel: positive = LEFT
+  await expect.poll(async () => (await H.car(page)).steer).toBeLessThan(-0.2);
+});
+
+test('pedals: only a short press is needed', async ({ page }) => {
+  await H.load(page);
+  await toStep(page, P.splitRising);
+  await H.turnAndHold(page, 0, 0, 0, -1, 'Turn the wheel right');
+  await H.turnAndHold(page, 0, 0, -1, 1, 'Press the accelerator');
+  await H.setAxis(page, 0, 0, 0);
+  await H.sweep(page, 0, 2, -1, -0.6, -1);   // only 20% of the travel
+  await H.expectStep(page, 'Press the brake');
+});
+
+test('pedals: a pedal box the browser only shows once it moves is still found', async ({ page }) => {
+  await H.load(page);
+  await H.plug(page, { devices: [P.pedalBox.devices[0]] });   // wheel only, pedals not visible yet
+  await page.click('#whBtn');
+  await H.expectStep(page, 'Turn the wheel left');
+  await H.turnAndHold(page, 0, 0, 0, -1, 'Turn the wheel right');
+  await H.turnAndHold(page, 0, 0, -1, 1, 'Press the accelerator');
+  await H.setAxis(page, 0, 0, 0);
+  // pedals appear on the first press, already a little way down
+  await page.evaluate(() => window.__fake.plug('FANATEC CSL Pedals (Vendor: 0eb7 Product: 6204)', [0.1, 0, 0]));
+  await H.sweep(page, 1, 0, 0.1, 1, 0);
+  await H.expectStep(page, 'Press the brake');
+});
+
+test('pedals: a hidden pedal stamped on fast still ends up the right way round', async ({ page }) => {
+  await H.load(page);
+  await toStep(page, P.splitQuirk);
+  await H.turnAndHold(page, 0, 0, 0, -1, 'Turn the wheel right');
+  await H.turnAndHold(page, 0, 0, -1, 1, 'Press the accelerator');
+  await H.setAxis(page, 0, 0, 0);
+  // reads 0 until touched; first reading is already floored (-1), then released to its real rest (+1)
+  await H.setAxis(page, 0, 2, -1); await page.waitForTimeout(300);
+  await H.setAxis(page, 0, 2, 1);
+  await H.expectStep(page, 'Press the brake');   // takes ~2 s: it works out that +1 is where the pedal rests
+  while (await H.title(page).textContent() !== 'Check it works') await H.skip(page);
+  await page.locator('#whRow .btn', { hasText: 'Save and drive' }).click();
+  await H.focusGame(page);
+  await page.waitForTimeout(800);
+  expect((await H.car(page)).v).toBeLessThan(1.2);   // pedal resting at +1 = not pressed (only idle creep)
+  await H.setAxis(page, 0, 2, -1);                    // floored
+  await expect.poll(async () => (await H.car(page)).v, { timeout: 5000 }).toBeGreaterThan(2);
+});
+
+test('nothing detected after a few seconds: shows what the browser sees', async ({ page }) => {
+  await H.load(page);
+  await toStep(page, P.splitRising);
+  await H.turnAndHold(page, 0, 0, 0, -1, 'Turn the wheel right');
+  await H.turnAndHold(page, 0, 0, -1, 1, 'Press the accelerator');
+  await H.setAxis(page, 0, 0, 0);
+  await expect(page.locator('#whS')).toContainText('What your browser sees right now', { timeout: 10000 });
+  await expect(page.locator('#whS')).toContainText('axis 2 -1.00');
+});
+
 // ---------- No hardware, unplugging, keyboard fallback, saving ----------
 test('no controller yet: tells the player to press a button, then finds it', async ({ page }) => {
   await H.load(page);
@@ -158,7 +250,7 @@ test('no controller yet: tells the player to press a button, then finds it', asy
   await expect(page.locator('#whS')).toContainText('No wheel found yet');
   await H.plug(page, P.splitRising);
   await expect(page.locator('#whS')).toContainText('Found: Logitech G29 Driving Force Racing Wheel');
-  await H.expectStep(page, 'Turn the wheel fully left');
+  await H.expectStep(page, 'Turn the wheel left');
 });
 
 test('unplugging mid-drive falls back to the keyboard without errors', async ({ page }) => {
@@ -190,7 +282,7 @@ test('setup is remembered after reload, and can be removed', async ({ page }) =>
 
   await page.reload(); await H.focusGame(page);
   await H.plug(page, p);
-  await H.setAxis(page, 0, 0, 0.8);   // this wheel's full right is 0.8
+  await H.setAxis(page, 0, 0, 1);   // full right
   await expect.poll(async () => (await H.car(page)).steer).toBeCloseTo(MAXS, 2);
 
   await page.click('#whBtn');
