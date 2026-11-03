@@ -101,6 +101,20 @@ This is a simplified practice tool. Real TP test marking covers more items.
 
 Download `index.html` and open it in any modern browser. That's it.
 
+## Tests
+
+End-to-end tests run in a real browser with **fake steering wheels**, so no hardware is needed. A small script stands in for the browser's controller API, then the tests plug in a "wheel", turn it, press pedals and buttons, and check the car responds.
+
+They cover four wheel layouts (split pedals in both directions, one shared pedal axis, and a separate pedal box), the setup's wrong-input hints, analogue throttle, manual clutch and stalling, unplugging mid-drive, keyboard fallback and saved settings.
+
+```
+npm install
+npx playwright install chromium
+npm test
+```
+
+They also run on GitHub Actions on every push.
+
 ## Credits
 
 - Built by Alvinelyn — Product Manager, Singapore
