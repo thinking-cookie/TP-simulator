@@ -1924,6 +1924,17 @@ const Wheel = (() => {
     {k:'restart', n:'Restart run',            d:'Optional.'}
   ];
   const PEDAL = {thr:'accelerator', brk:'brake', clu:'clutch'};
+  // The keyboard key that does the same job, for when the wheel can't be set up
+  const KB = k => ({
+    left:'A or ←', right:'D or →', thr:'W or ↑', brk:'S or ↓', clu:'Shift',
+    up: MANUAL ? 'Shift + ↑' : 'F', down: MANUAL ? 'Shift + ↓' : 'R',
+    sigL:'Z', sigR:'X', lookL:'Q', lookR:'E', hand:'Space', start:'I', horn:'H', restart:'Enter'
+  })[k];
+  const KB_NAME = {left:'steer left', right:'steer right', thr:'accelerate', brk:'brake', clu:'press the clutch',
+    up: 'shift up', down: 'shift down', sigL:'signal left', sigR:'signal right', lookL:'check left', lookR:'check right',
+    hand:'use the handbrake', start:'start the engine', horn:'sound the horn', restart:'restart'};
+  const kbFor = k => `use ${KB(k)} on the keyboard to ${KB_NAME[k]}`;
+  const KB_ALL = () => `W accelerate, S brake, A and D steer, ${MANUAL ? 'Shift clutch, Shift + ↑ ↓ gears' : 'F drive, R reverse'}, Z and X signal, Q and E blind spot`;
   const STEPS = [
     {k:'rest',  kind:'rest', t:'Hands and feet off', d:'Let go of the wheel and take your feet off every pedal.'},
     {k:'left',  kind:'axis', t:'Turn the wheel left', d:'Turn it well to the left and hold it there for a moment. No need to come back to the centre.'},
@@ -2058,7 +2069,8 @@ const Wheel = (() => {
     $('whT').textContent = saved ? 'Wheel is set up' : 'Check it works';
     const missing = [!m.steer && 'steering', !m.thr && 'accelerator', !m.brk && 'brake'].filter(Boolean);
     $('whD').textContent = 'Turn the wheel and press each pedal. Every bar should go smoothly from empty to full.' +
-      (missing.length ? ` Not set: ${missing.join(', ')}. The keyboard still covers ${missing.length > 1 ? 'them' : 'it'}.` : '');
+      (missing.length ? ` Not set: ${missing.join(', ')}. Use the keyboard for ${missing.length > 1 ? 'them' : 'it'}: ` +
+        missing.map(n => `${KB({steering:'left', accelerator:'thr', brake:'brk'}[n])}${n === 'steering' ? ' / D or →' : ''} for ${n}`).join(', ') + '.' : '');
     $('whM').hidden = true; $('whTest').hidden = false; $('wtK').textContent = 'Press a mapped button';
     setRow(saved ? [['Remove', remove], ['Set up again', startSteps], ['Done', close]] : [['Start over', startSteps], ['Save and drive', save]]);
   }
@@ -2109,7 +2121,8 @@ const Wheel = (() => {
     if (!map){ close(); return; }
     const c = cal(), deg = map.steer ? wheelDeg(map.steer, c) : null, on = connected();
     $('wsCentre').disabled = deg === null;
-    status(!on ? 'Wheel not connected. Plug it in, then press any button on it.' : !map.steer ? 'Steering is not set up. Tap "Set up again".' : '', on && map.steer ? '' : 'bad');
+    status(!on ? `Wheel not connected. Plug it in, then press any button on it. Meanwhile drive with the keyboard: ${KB_ALL()}.`
+      : !map.steer ? 'Steering is not set up. Tap "Set up again", or steer with A and D (or ← →) on the keyboard.' : '', on && map.steer ? '' : 'bad');
     const d = deg === null ? c.centre : deg, a = d - c.centre, car = carSteer(d, c);
     $('wsWheel').setAttribute('transform', `rotate(${d.toFixed(1)} 120 120)`);
     const wt = deg === null ? '—' : Math.abs(a) < 0.05 ? 'On centre' : `${fmt(a)}° ${side(a)} of centre`;
@@ -2143,7 +2156,7 @@ const Wheel = (() => {
     setBar('wtT', m.thr ? pedal(m.thr) : null); setBar('wtB', m.brk ? pedal(m.brk) : null); setBar('wtC', m.clu ? pedal(m.clu) : null);
     for (const a of ACTIONS) if (m.btn && m.btn[a.k] && btn(m.btn[a.k])) $('wtK').textContent = a.n;
     const off = (m.pads || []).length && !(m.pads || []).some(id => padById(id));
-    status(off ? 'Wheel not connected. Plug it in, then press any button on it.' : '', off ? 'bad' : '');
+    status(off ? `Wheel not connected. Plug it in, then press any button on it. Meanwhile drive with the keyboard: ${KB_ALL()}.` : '', off ? 'bad' : '');
   }
 
 
@@ -2210,7 +2223,7 @@ const Wheel = (() => {
     if (!best){
       meter(0); w.still = 0; w.key = null;
       if (w.hint && w.t < w.hint.until) status(w.hint.msg, 'bad');   // keep a "that's the wrong control" hint up long enough to read
-      else if (w.t > 6) status('Not picking it up? What your browser sees right now: ' + liveAxes(gs) + '. Tap Skip to use the keyboard for this one.', 'bad');
+      else if (w.t > 6) status(`Not picking it up? Tap Skip and ${kbFor(s.k)} instead. What your browser sees right now: ${liveAxes(gs)}.`, 'bad');
       else status(steerStep ? 'Waiting… turn it well over.' : 'Waiting… push the pedal down.');
       return;
     }
@@ -2250,7 +2263,7 @@ const Wheel = (() => {
   function stepTick(dt){
     const s = STEPS[wiz.i], w = wiz.work, gs = pads();
     if (s.kind === 'rest'){
-      if (!gs.length){ status('No wheel found yet. Press any button on it: browsers only show a controller after a button press.', 'bad'); meter(0); w.ref = null; return; }
+      if (!gs.length){ status(`No wheel found yet. Press any button on it: browsers only show a controller after a button press. No luck? Close this and drive with the keyboard: ${KB_ALL()}.`, 'bad'); meter(0); w.ref = null; return; }
       const cur = {}; gs.forEach(g => { cur[g.id] = [...g.axes]; });
       let moved = !w.ref || Object.keys(cur).length !== Object.keys(w.ref).length;
       if (!moved) for (const id in cur) cur[id].forEach((v, i) => { const r = w.ref[id] && w.ref[id][i]; if (r === undefined || Math.abs(v - r) > 0.06) moved = true; });
@@ -2272,7 +2285,7 @@ const Wheel = (() => {
     if (!down.length){ if (!$('whS').classList.contains('bad')) status('Waiting for a button…'); return; }
     const p = down[0], used = Object.entries(wiz.draft.btn).find(([, v]) => v.pad === p.pad && v.b === p.b);
     wiz.waitRel = true;
-    if (used){ status(`That button is already "${ACTIONS.find(a => a.k === used[0]).n}". Pick another, or Skip.`, 'bad'); return; }
+    if (used){ status(`That button is already "${ACTIONS.find(a => a.k === used[0]).n}". Pick another, or Skip and ${kbFor(s.k)}.`, 'bad'); return; }
     wiz.draft.btn[s.k] = p; next();
   }
 

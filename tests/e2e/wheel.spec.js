@@ -150,6 +150,7 @@ test('setup gives clear hints for wrong inputs', async ({ page }) => {
   await H.expectStep(page, 'Gear down / Reverse');
   await H.press(page, { d: 0, b: 4 });   // same button twice
   await expect(page.locator('#whS')).toContainText('already "Gear up / Drive"');
+  await expect(page.locator('#whS')).toContainText('Skip and use R on the keyboard to shift down');
 });
 
 // ---------- Forgiving setup (from real T300 feedback: steering took 3 tries, pedals not found) ----------
@@ -176,6 +177,7 @@ test('steering: a partial turn still maps the end stops to full lock', async ({ 
   await H.turnAndHold(page, 0, 0, -0.4, 0.4, 'Press the accelerator');
   await H.setAxis(page, 0, 0, 0);
   while (await H.title(page).textContent() !== 'Check it works') await H.skip(page);
+  await expect(page.locator('#whD')).toContainText('Not set: accelerator, brake. Use the keyboard for them: W or ↑ for accelerator, S or ↓ for brake.');
   await page.locator('#whRow .btn', { hasText: 'Save and drive' }).click();
   await H.focusGame(page);
   await H.setAxis(page, 0, 0, -1);
@@ -240,6 +242,7 @@ test('nothing detected after a few seconds: shows what the browser sees', async 
   await H.turnAndHold(page, 0, 0, -1, 1, 'Press the accelerator');
   await H.setAxis(page, 0, 0, 0);
   await expect(page.locator('#whS')).toContainText('What your browser sees right now', { timeout: 10000 });
+  await expect(page.locator('#whS')).toContainText('Tap Skip and use W or ↑ on the keyboard to accelerate instead');
   await expect(page.locator('#whS')).toContainText('axis 2 -1.00');
 });
 
@@ -248,6 +251,7 @@ test('no controller yet: tells the player to press a button, then finds it', asy
   await H.load(page);
   await page.click('#whBtn');
   await expect(page.locator('#whS')).toContainText('No wheel found yet');
+  await expect(page.locator('#whS')).toContainText('drive with the keyboard: W accelerate, S brake, A and D steer');
   await H.plug(page, P.splitRising);
   await expect(page.locator('#whS')).toContainText('Found: Logitech G29 Driving Force Racing Wheel');
   await H.expectStep(page, 'Turn the wheel left');
@@ -422,6 +426,7 @@ test('settings with the wheel unplugged: says so, and the centre button waits', 
   await page.evaluate(() => window.__fake.unplug(0));
   await openSettings(page);
   await expect(page.locator('#whS')).toContainText('Wheel not connected');
+  await expect(page.locator('#whS')).toContainText('Meanwhile drive with the keyboard: W accelerate');
   await expect(page.locator('#wsCentre')).toBeDisabled();
   await expect(page.locator('#wsWheelTxt')).toHaveText('—');
 });
