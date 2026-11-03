@@ -37,13 +37,14 @@ for (const [key, profile] of Object.entries(P)) {
       // Brake stops it
       await H.setAxis(page, brk.d, brk.axis, H.pedalRaw(brk, 1));
       await expect.poll(async () => (await H.car(page)).v, { timeout: 5000 }).toBe(0);
-      await H.setAxis(page, brk.d, brk.axis, brk.rest);
 
-      // Gear down button selects Reverse when stopped; gear up goes back to Drive
+      // Gear down button selects Reverse when stopped; gear up goes back to Drive.
+      // Foot stays on the brake: without it the car creeps in R and the trainer (rightly) refuses D while moving.
       await H.press(page, profile.buttons.down);
       await expect.poll(async () => (await H.car(page)).gear).toBe('R');
       await H.press(page, profile.buttons.up);
       await expect.poll(async () => (await H.car(page)).gear).toBe('D');
+      await H.setAxis(page, brk.d, brk.axis, brk.rest);
 
       // Signal button
       await H.press(page, profile.buttons.sigL);
@@ -193,8 +194,8 @@ test('setup is remembered after reload, and can be removed', async ({ page }) =>
   await expect.poll(async () => (await H.car(page)).steer).toBeCloseTo(MAXS, 2);
 
   await page.click('#whBtn');
-  await expect(page.locator('#whT')).toHaveText('Wheel is set up');
-  await page.locator('#whRow .btn', { hasText: 'Remove' }).click();
+  await expect(page.locator('#whT')).toHaveText('Wheel settings');
+  await page.click('#wsRemove');
   expect(await page.evaluate(() => localStorage.getItem('tp-wheel-v1'))).toBeNull();
 });
 
@@ -210,4 +211,125 @@ test('game waits while the setup popup is open', async ({ page }) => {
   expect(after.x).toBe(before.x);
   expect(after.v).toBe(before.v);
   await page.keyboard.up('w');
+});
+
+
+// ---------- Wheel settings: centre, dead zone, rotation ----------
+// Default rotation 900°, so one degree of wheel = 1/450 of the raw axis on each side.
+const DEG = d => d / 450;
+async function settingsUp(page) {
+  const errors = await H.load(page);
+  const p = P.splitRising;
+  await H.plug(page, p); await H.runSetup(page, p);
+  return { errors, p };
+}
+const steerNow = async page => (await H.car(page)).steer;
+async function openSettings(page) {
+  await page.click('#whBtn');
+  await expect(page.locator('#whT')).toHaveText('Wheel settings');
+}
+async function closeSettings(page) {
+  await page.locator('#whRow .btn', { hasText: 'Done' }).click();
+  await expect(page.locator('#wh')).toBeHidden();
+  await H.focusGame(page);
+}
+async function setRange(page, sel, v) {
+  await page.locator(sel).evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }, String(v));
+}
+
+test('settings: the drawn wheel turns with the real wheel and the car follows', async ({ page }) => {
+  const { errors } = await settingsUp(page);
+  await openSettings(page);
+  await H.setAxis(page, 0, 0, DEG(90));   // 90° right
+  await expect(page.locator('#wsWheel')).toHaveAttribute('transform', 'rotate(90.0 120 120)');
+  await expect(page.locator('#wsWheelTxt')).toHaveText('90° right of centre');
+  await expect(page.locator('#wsCarTxt')).toHaveText(/% right$/);
+  await H.setAxis(page, 0, 0, DEG(-2));   // inside the default ±3° zone
+  await expect(page.locator('#wsCarTxt')).toHaveText('Straight');
+  await expect(page.locator('#wsPill')).toContainText('Within ±3° of centre');
+  expect(errors).toEqual([]);
+});
+
+test('settings: dead centre zone keeps the car straight, then turns smoothly past it', async ({ page }) => {
+  await settingsUp(page);
+  await openSettings(page);
+  await setRange(page, '#wsDz', 10);
+  await expect(page.locator('#wsDzV')).toHaveText('± 10°');
+  await closeSettings(page);
+
+  await H.setAxis(page, 0, 0, DEG(9));    // 9° right: inside ±10°
+  await page.waitForTimeout(300);
+  expect(await steerNow(page)).toBe(0);
+  await H.setAxis(page, 0, 0, DEG(-9.5));
+  await page.waitForTimeout(300);
+  expect(await steerNow(page)).toBe(0);
+  await H.setAxis(page, 0, 0, DEG(12));   // just past: small turn, no jump
+  await expect.poll(() => steerNow(page)).toBeGreaterThan(0);
+  expect(await steerNow(page)).toBeLessThan(0.01 * MAXS * 2);
+  await H.setAxis(page, 0, 0, 1);         // end stop still reaches full lock
+  await expect.poll(() => steerNow(page)).toBeCloseTo(MAXS, 3);
+});
+
+test('settings: "Set centre here" makes the current wheel position straight ahead', async ({ page }) => {
+  await settingsUp(page);
+  await openSettings(page);
+  await H.setAxis(page, 0, 0, DEG(20));   // wheel sits 20° right when "straight"
+  await expect(page.locator('#wsWheelTxt')).toHaveText('20° right of centre');
+  await page.click('#wsCentre');
+  await expect(page.locator('#wsWheelTxt')).toHaveText('On centre');
+  await expect(page.locator('#wsCentreTxt')).toHaveText("Centre moved 20° right of your wheel's own middle.");
+  // the blue centre mark moved to 20° on the ring (top of the ring is 0°)
+  const x1 = Number(await page.locator('#wsCl').getAttribute('x1'));
+  expect(x1).toBeGreaterThan(120 + 90 * Math.sin(19 * Math.PI / 180));
+  await closeSettings(page);
+
+  await page.waitForTimeout(200);
+  expect(await steerNow(page)).toBe(0);                    // 20° right now drives straight
+  await H.setAxis(page, 0, 0, 0);                          // wheel's own middle is now 20° LEFT of centre
+  await expect.poll(() => steerNow(page)).toBeLessThan(0);
+  await H.setAxis(page, 0, 0, 1);                          // both end stops still give full lock
+  await expect.poll(() => steerNow(page)).toBeCloseTo(MAXS, 3);
+  await H.setAxis(page, 0, 0, -1);
+  await expect.poll(() => steerNow(page)).toBeCloseTo(-MAXS, 3);
+
+  await openSettings(page);
+  await page.locator('#whRow .btn', { hasText: 'Reset' }).click();
+  await expect(page.locator('#wsCentreTxt')).toContainText("Centre is your wheel's own middle");
+});
+
+test('settings: wheel rotation changes how many degrees a turn is', async ({ page }) => {
+  await settingsUp(page);
+  await openSettings(page);
+  await page.selectOption('#wsRot', '270');
+  await H.setAxis(page, 0, 0, 0.5);       // half way to the stop on a 270° wheel = 67.5°
+  await expect(page.locator('#wsWheelTxt')).toHaveText('67.5° right of centre');
+  await closeSettings(page);
+  // (67.5 - 3) / (135 - 3) of full lock
+  await expect.poll(() => steerNow(page)).toBeCloseTo((64.5 / 132) * MAXS, 3);
+});
+
+test('settings are saved and come back after a reload', async ({ page }) => {
+  const { p } = await settingsUp(page);
+  await openSettings(page);
+  await setRange(page, '#wsDz', 6.5);
+  await page.selectOption('#wsRot', '1080');
+  await H.setAxis(page, 0, 0, 10 / 540);   // 10° right on a 1080° wheel
+  await page.click('#wsCentre');
+  await closeSettings(page);
+
+  await page.reload(); await H.focusGame(page);
+  await H.plug(page, p);
+  await openSettings(page);
+  await expect(page.locator('#wsDzV')).toHaveText('± 6.5°');
+  await expect(page.locator('#wsRot')).toHaveValue('1080');
+  await expect(page.locator('#wsCentreTxt')).toHaveText("Centre moved 10° right of your wheel's own middle.");
+});
+
+test('settings with the wheel unplugged: says so, and the centre button waits', async ({ page }) => {
+  await settingsUp(page);
+  await page.evaluate(() => window.__fake.unplug(0));
+  await openSettings(page);
+  await expect(page.locator('#whS')).toContainText('Wheel not connected');
+  await expect(page.locator('#wsCentre')).toBeDisabled();
+  await expect(page.locator('#wsWheelTxt')).toHaveText('—');
 });

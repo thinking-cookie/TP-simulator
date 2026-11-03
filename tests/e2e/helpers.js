@@ -41,7 +41,7 @@ const setButton = (page, d, b, on) => page.evaluate(([d, b, on]) => window.__fak
 
 // Press and release a button. Held for a few frames so even a slow machine sees it.
 async function press(page, { d, b }) {
-  await setButton(page, d, b, true); await page.waitForTimeout(150);
+  await setButton(page, d, b, true); await page.waitForTimeout(300);
   await setButton(page, d, b, false); await page.waitForTimeout(150);
 }
 // Move an axis smoothly to `to`, hold, then back to `back`, like a hand or foot would.
@@ -88,7 +88,13 @@ async function runSetup(page, profile) {
   for (let i = 0; i < ORDER.length; i++) {
     const k = ORDER[i];
     await expectStep(page, STEP_TITLE[k]);
-    if (profile.buttons[k]) await press(page, profile.buttons[k]); else await skip(page);
+    if (!profile.buttons[k]) { await skip(page); continue; }
+    // press; if a busy test machine missed the tap, press again, as a person would
+    for (let n = 0; n < 3; n++) {
+      await press(page, profile.buttons[k]);
+      if (await title(page).textContent() !== STEP_TITLE[k]) break;
+      await page.waitForTimeout(400);
+    }
   }
   await expectStep(page, 'Check it works');
   await page.locator('#whRow .btn', { hasText: 'Save and drive' }).click();

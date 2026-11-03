@@ -152,6 +152,37 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
 .wh .wbar.ctr::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--muted)}
 .wh .wbar.off{opacity:.3}
 .wh .row .btn{padding:8px 8px}
+/* wheel settings */
+.wh .fbox.wide{max-width:460px}
+.wh .fbox.wide .fine{display:none}
+.wh .whset{display:flex;flex-direction:column;gap:16px}
+.wh .wsv{background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.wh .wsg{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:center}
+.wh .wsc{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.wh .wsc svg{width:100%;height:auto;max-width:200px;display:block}
+.wh .wsc.car svg{max-width:92px}
+.wh .wsc svg text{font-family:var(--body)}
+.wh .lblc{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.wh .wsc b{font-family:var(--display);font-size:22px;line-height:1.05;text-align:center}
+.wh .wsc b.str{color:var(--sky)} .wh .wsc b.turn{color:var(--ok)}
+.wh .wsp{margin:0;padding:8px 10px;border-radius:6px;font-size:13px;line-height:1.4;background:rgba(98,204,255,.12);color:#9fdcff}
+.wh .wsp.turn{background:rgba(63,202,139,.12);color:#7fe0b2}
+.wh .wsrow{display:flex;gap:12px;align-items:center}
+.wh .wsrow .btn{flex:none;background:var(--sky);color:#0b1a24;min-height:44px}
+.wh .wsrow .btn[disabled]{opacity:.45;cursor:not-allowed}
+.wh .wsrow span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.wh .wsf{display:flex;flex-direction:column;gap:6px}
+.wh .wsf .h{display:flex;justify-content:space-between;align-items:baseline}
+.wh .wsf label,.wh .wsr .t{font-weight:700;font-size:15px;color:var(--fg)}
+.wh .wsf b{font-family:var(--display);font-size:22px;color:var(--sky)}
+.wh .wsf input[type=range]{width:100%;accent-color:var(--accent);height:28px;margin:0}
+.wh .wsf small,.wh .wsr small{font-size:12.5px;color:var(--muted);line-height:1.45}
+.wh .wsr{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.wh .wsr label{display:flex;flex-direction:column;gap:2px}
+.wh select{height:44px;min-width:110px;background:var(--raise);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:0 10px;font:inherit;font-size:15px}
+.wh .wsl{display:flex;gap:18px;justify-content:center}
+.wh .lnk{background:none;border:0;color:var(--sky);font:inherit;font-size:13px;text-decoration:underline;padding:8px 2px;cursor:pointer}
+.wh .lnk:focus-visible,.wh select:focus-visible,.wh input:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
 /* name gate */
 .gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(10,12,15,.86);backdrop-filter:blur(3px)}
 .gate form{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;width:100%;max-width:360px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
@@ -366,6 +397,53 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
       <div class="wt"><span>Brake</span><div class="wbar"><i id="wtB"></i></div></div>
       <div class="wt"><span>Clutch</span><div class="wbar"><i id="wtC"></i></div></div>
       <div class="wt"><span>Last button</span><b id="wtK">Press a mapped button</b></div>
+    </div>
+    <div class="whset" id="whSet" hidden>
+      <div class="wsv">
+        <div class="wsg">
+          <div class="wsc">
+            <span class="lblc">Your wheel</span>
+            <svg viewBox="0 0 240 240" role="img" aria-label="Your steering wheel. The yellow mark turns with it; the blue mark is the saved centre.">
+              <circle cx="120" cy="120" r="100" fill="none" stroke="#2c333d" stroke-width="6"></circle>
+              <g id="wsTicks" stroke="#4a525e" stroke-width="2"></g>
+              <path id="wsZone" fill="none" stroke="#62ccff" stroke-opacity=".45" stroke-width="10"></path>
+              <line id="wsCl" stroke="#62ccff" stroke-width="5" stroke-linecap="round"></line>
+              <text id="wsCt" text-anchor="middle" fill="#62ccff" font-size="12" font-weight="700" letter-spacing="1">CENTRE</text>
+              <g id="wsWheel">
+                <circle cx="120" cy="120" r="76" fill="none" stroke="#c9ced6" stroke-width="13"></circle>
+                <path d="M120 120 L50 136 M120 120 L190 136 M120 120 L120 190" stroke="#c9ced6" stroke-width="11" stroke-linecap="round"></path>
+                <circle cx="120" cy="120" r="19" fill="#191d23" stroke="#c9ced6" stroke-width="6"></circle>
+                <rect x="114" y="37" width="12" height="20" rx="2" fill="#f6c915"></rect>
+              </g>
+            </svg>
+            <b id="wsWheelTxt">On centre</b>
+          </div>
+          <div class="wsc car">
+            <span class="lblc">In the trainer</span>
+            <svg viewBox="0 0 120 170" role="img" aria-label="The trainer car's front wheels">
+              <rect x="26" y="20" width="68" height="140" rx="18" fill="#eceef1"></rect>
+              <rect x="34" y="52" width="52" height="30" rx="6" fill="#2c333d"></rect>
+              <g id="wsFL"><rect x="12" y="30" width="12" height="28" rx="3" fill="#16181b"></rect></g>
+              <g id="wsFR"><rect x="96" y="30" width="12" height="28" rx="3" fill="#16181b"></rect></g>
+              <rect x="12" y="118" width="12" height="28" rx="3" fill="#16181b"></rect>
+              <rect x="96" y="118" width="12" height="28" rx="3" fill="#16181b"></rect>
+            </svg>
+            <b id="wsCarTxt" class="str">Straight</b>
+          </div>
+        </div>
+        <p class="wsp" id="wsPill" aria-live="polite"></p>
+      </div>
+      <div class="wsrow"><button class="btn" type="button" id="wsCentre">Set centre here</button><span id="wsCentreTxt"></span></div>
+      <div class="wsf">
+        <div class="h"><label for="wsDz">Dead centre zone</label><b id="wsDzV">± 3°</b></div>
+        <input type="range" id="wsDz" min="0" max="15" step="0.5" value="3">
+        <small>Turns smaller than this, either way from centre, keep the car straight.</small>
+      </div>
+      <div class="wsr">
+        <label for="wsRot"><span class="t">Wheel rotation</span><small>Match your wheel's software</small></label>
+        <select id="wsRot"><option value="270">270°</option><option value="540">540°</option><option value="900">900°</option><option value="1080">1080°</option></select>
+      </div>
+      <div class="wsl"><button class="lnk" type="button" id="wsRedo">Set up again</button><button class="lnk" type="button" id="wsRemove">Remove wheel</button></div>
     </div>
     <p class="whs" id="whS" aria-live="polite"></p>
     <div class="row" id="whRow"></div>
@@ -1868,12 +1946,23 @@ const Wheel = (() => {
   // pedal: 0 = up, 1 = floored, whichever way this brand counts. Small deadzone at both ends so a resting foot reads 0.
   function pedal(a){ const v = raw(a); if (v === null || a.full === a.rest) return null;
     return Math.min(1, Math.max(0, ((v - a.rest)/(a.full - a.rest) - 0.05)/0.92)); }
-  // steering: -1 = full left, 0 = centre, 1 = full right
-  function steer(s){ const v = raw(s); if (v === null) return null;
+  // Player settings: wheel rotation (lock to lock, degrees), saved centre (degrees from the wheel's own middle),
+  // dead centre zone (± degrees around that centre where the car stays straight).
+  const CAL0 = {rot:900, centre:0, dz:3};
+  const cal = m => ({...CAL0, ...((m || map || {}).cal || {})});
+  // physical wheel position: -1 = full left, 0 = the wheel's own middle, 1 = full right
+  function steerRaw(s){ const v = raw(s); if (v === null) return null;
     const d = v - s.center, toR = s.right - s.center, toL = s.left - s.center;
-    let x = Math.sign(d) === Math.sign(toR) ? (toR ? d/toR : 0) : (toL ? -d/toL : 0);
-    if (Math.abs(x) < 0.015) x = 0;   // tiny deadzone so the car sits straight
+    const x = Math.sign(d) === Math.sign(toR) ? (toR ? d/toR : 0) : (toL ? -d/toL : 0);
     return Math.max(-1, Math.min(1, x)); }
+  const wheelDeg = (s, c) => { const x = steerRaw(s); return x === null ? null : x*c.rot/2; };
+  // degrees on the wheel -> car steering -1..1. Flat inside the dead zone, then rises from zero (no jump) to full lock
+  // at the wheel's end stop on each side, so moving the centre never costs any lock.
+  function carSteer(deg, c){
+    const a = deg - c.centre, ax = Math.abs(a); if (ax <= c.dz) return 0;
+    const reach = a > 0 ? c.rot/2 - c.centre : c.rot/2 + c.centre;
+    return Math.sign(a)*Math.min(1, (ax - c.dz)/Math.max(1, reach - c.dz)); }
+  function steer(s, m){ const c = cal(m), d = wheelDeg(s, c); return d === null ? null : carSteer(d, c); }
   function btn(b){ const g = b && padById(b.pad), k = g && g.buttons[b.b]; return !!k && (k.pressed || k.value > 0.5); }
   const short = id => (id || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/^[0-9a-f]{4}-[0-9a-f]{4}-/i, '').trim().slice(0, 42) || 'Controller';
   const uses = id => !!(map && map.pads && map.pads.includes(id));
@@ -1917,10 +2006,18 @@ const Wheel = (() => {
     const box = $('wh');
     ['keydown','keyup'].forEach(t => box.addEventListener(t, e => { e.stopPropagation(); if (t === 'keydown' && e.key === 'Escape') close(); }));
     $('whX').onclick = close;
+    const ticks = $('wsTicks');
+    for (let d = 0; d < 360; d += 30){ const l = document.createElementNS('http://www.w3.org/2000/svg', 'line'), [x1, y1] = ring(d, 96), [x2, y2] = ring(d, 104);
+      l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); ticks.appendChild(l); }
+    $('wsCentre').onclick = setCentre; $('wsRedo').onclick = startSteps; $('wsRemove').onclick = remove;
+    $('wsDz').oninput = () => saveCal({dz: Number($('wsDz').value)});
+    $('wsRot').onchange = () => saveCal({rot: Number($('wsRot').value)});
   }
+  // point on the wheel picture's ring: 0° at the top, clockwise = right
+  const ring = (deg, r) => { const t = (deg - 90)*Math.PI/180; return [(120 + r*Math.cos(t)).toFixed(1), (120 + r*Math.sin(t)).toFixed(1)]; };
   function open(){
     bind(); wiz.open = true; $('wh').hidden = false;
-    if (map) showTest(map, true); else startSteps();
+    if (map) showSettings(); else startSteps();
     wiz.t = performance.now(); cancelAnimationFrame(wiz.raf); wiz.raf = requestAnimationFrame(tick);
   }
   function close(){ if (!wiz.open) return; wiz.open = false; cancelAnimationFrame(wiz.raf); $('wh').hidden = true; setBtn(); cv.focus(); }
@@ -1928,14 +2025,15 @@ const Wheel = (() => {
     const row = $('whRow'); row.innerHTML = '';
     list.forEach(([label, fn], i) => { const b = document.createElement('button'); b.type = 'button';
       b.className = 'btn' + (i < list.length - 1 ? ' ghost' : ''); b.textContent = label; b.onclick = fn; row.appendChild(b); });
-    setTimeout(() => { const l = row.lastChild; if (l && wiz.open) l.focus(); }, 30);
+    setTimeout(() => { const l = row.lastChild; if (l && wiz.open) l.focus({preventScroll:true}); }, 30);
+    $('wh').querySelector('.fbox').scrollTop = 0;
   }
   function status(text, kind){ const s = $('whS'); if (s.textContent !== text) s.textContent = text; s.className = 'whs' + (kind ? ' ' + kind : ''); }
   function meter(f){ $('whM').firstElementChild.style.width = Math.round(Math.min(1, Math.max(0, f))*100) + '%'; }
 
   function startSteps(){ wiz.mode = 'steps'; wiz.i = 0; wiz.snap = {}; wiz.held = {}; wiz.draft = {v:1, btn:{}}; wiz.waitRel = false; enterStep(); }
   function enterStep(){
-    const s = STEPS[wiz.i]; wiz.work = {lock:null, ext:0, last:null, still:0, ref:null};
+    const s = STEPS[wiz.i]; wiz.work = {lock:null, ext:0, last:null, still:0, ref:null}; layout('steps');
     $('whStep').textContent = `Step ${wiz.i + 1} of ${STEPS.length}`; $('whT').textContent = s.t; $('whD').textContent = s.d;
     $('whM').hidden = s.kind === 'btn'; meter(0); $('whTest').hidden = true; status('');
     setRow(s.kind === 'rest' ? [['Cancel', close]] : [['Start over', startSteps], ['Skip', next]]);
@@ -1948,8 +2046,15 @@ const Wheel = (() => {
     delete d.left; delete d.right;
     showTest(d, false);
   }
+  // which body the popup shows: setup steps, the check screen, or settings
+  function layout(mode){
+    $('whSet').hidden = mode !== 'settings'; $('whD').hidden = mode === 'settings';
+    $('wh').querySelector('.fbox').classList.toggle('wide', mode === 'settings');
+    if (mode !== 'test') $('whTest').hidden = true;
+    if (mode !== 'steps') $('whM').hidden = true;
+  }
   function showTest(m, saved){
-    wiz.mode = 'test'; wiz.test = m;
+    wiz.mode = 'test'; wiz.test = m; layout('test');
     $('whStep').textContent = saved ? 'Your wheel' : 'Last step';
     $('whT').textContent = saved ? 'Wheel is set up' : 'Check it works';
     const missing = [!m.steer && 'steering', !m.thr && 'accelerator', !m.brk && 'brake'].filter(Boolean);
@@ -1960,14 +2065,71 @@ const Wheel = (() => {
   }
   function save(){
     map = wiz.test; try { localStorage.setItem(KEY, JSON.stringify(map)); } catch(e) {}
-    flash('Wheel saved. The keyboard still works too', 'ok', 2400); close();
+    flash('Wheel saved. Tap 🎮 Wheel any time for settings', 'ok', 2600); close();
+  }
+
+  // ----- settings: live wheel, centre, dead zone, rotation -----
+  function showSettings(){
+    wiz.mode = 'settings'; layout('settings'); status('');
+    $('whStep').textContent = map.pads && map.pads[0] ? short(map.pads[0]) : 'Your wheel';
+    $('whT').textContent = 'Wheel settings';
+    syncInputs(); drawCentre();
+    setRow([['Reset', resetCal], ['Done', close]]);
+  }
+  function saveCal(part){
+    const c = {...cal(), ...part};
+    c.dz = Math.max(0, Math.min(15, c.dz)); c.centre = Math.max(-90, Math.min(90, c.centre));
+    map.cal = c; try { localStorage.setItem(KEY, JSON.stringify(map)); } catch(e) {}
+    syncInputs(); drawCentre();
+  }
+  function resetCal(){ saveCal({centre:0, dz:CAL0.dz}); flash('Centre and dead zone reset', 'info', 1200); }
+  function setCentre(){
+    const d = map.steer ? wheelDeg(map.steer, cal()) : null; if (d === null) return;
+    saveCal({centre: Math.round(d*10)/10}); flash('Centre saved', 'ok', 1100);
+  }
+  const fmt = n => String(Math.round(Math.abs(n)*10)/10);
+  const side = n => n < 0 ? 'left' : 'right';
+  function syncInputs(){
+    const c = cal();
+    if (document.activeElement !== $('wsDz')) $('wsDz').value = c.dz;
+    $('wsDzV').textContent = `± ${fmt(c.dz)}°`;
+    if (![...$('wsRot').options].some(o => Number(o.value) === c.rot)){ const o = document.createElement('option'); o.value = c.rot; o.textContent = c.rot + '°'; $('wsRot').appendChild(o); }
+    $('wsRot').value = String(c.rot);
+    $('wsCentreTxt').textContent = Math.abs(c.centre) < 0.05
+      ? "Centre is your wheel's own middle. If the car drifts with the wheel straight, hold it straight and tap."
+      : `Centre moved ${fmt(c.centre)}° ${side(c.centre)} of your wheel's own middle.`;
+  }
+  function drawCentre(){
+    const c = cal(), [a1, b1] = ring(c.centre, 90), [a2, b2] = ring(c.centre, 110), [tx, ty] = ring(c.centre, 116);
+    const L = $('wsCl'); L.setAttribute('x1', a1); L.setAttribute('y1', b1); L.setAttribute('x2', a2); L.setAttribute('y2', b2);
+    $('wsCt').setAttribute('x', tx); $('wsCt').setAttribute('y', ty - 4);
+    const [z1, w1] = ring(c.centre - c.dz, 100), [z2, w2] = ring(c.centre + c.dz, 100);
+    $('wsZone').setAttribute('d', c.dz > 0 ? `M ${z1} ${w1} A 100 100 0 0 1 ${z2} ${w2}` : '');
+  }
+  function setTick(){
+    if (!map){ close(); return; }
+    const c = cal(), deg = map.steer ? wheelDeg(map.steer, c) : null, on = connected();
+    $('wsCentre').disabled = deg === null;
+    status(!on ? 'Wheel not connected. Plug it in, then press any button on it.' : !map.steer ? 'Steering is not set up. Tap "Set up again".' : '', on && map.steer ? '' : 'bad');
+    const d = deg === null ? c.centre : deg, a = d - c.centre, car = carSteer(d, c);
+    $('wsWheel').setAttribute('transform', `rotate(${d.toFixed(1)} 120 120)`);
+    const wt = deg === null ? '—' : Math.abs(a) < 0.05 ? 'On centre' : `${fmt(a)}° ${side(a)} of centre`;
+    if ($('wsWheelTxt').textContent !== wt) $('wsWheelTxt').textContent = wt;
+    const ct = car === 0 ? 'Straight' : `${fmt(car*100)}% ${side(car)}`, cb = $('wsCarTxt');
+    if (cb.textContent !== ct){ cb.textContent = ct; cb.className = car === 0 ? 'str' : 'turn'; }
+    const fa = (car*35).toFixed(1);   // drawn front-wheel angle; the trainer's full lock is about 37°
+    $('wsFL').setAttribute('transform', `rotate(${fa} 18 44)`); $('wsFR').setAttribute('transform', `rotate(${fa} 102 44)`);
+    const inside = Math.abs(a) <= c.dz;
+    const pt = deg === null ? 'Turn your wheel to see it move here.' : Math.abs(a) < 0.05 ? 'Yellow mark is on the blue centre mark. Car goes straight.'
+      : inside ? `Within ±${fmt(c.dz)}° of centre, so the car still goes straight.` : `More than ${fmt(c.dz)}° from centre, so the car turns.`;
+    const p = $('wsPill'); if (p.textContent !== pt) p.textContent = pt; p.className = 'wsp' + (inside ? '' : ' turn');
   }
   function remove(){ map = null; try { localStorage.removeItem(KEY); } catch(e) {} flash('Wheel setup removed', 'info', 1600); close(); }
 
   function tick(now){
     if (!wiz.open) return;
     const dt = Math.min(0.5, Math.max(0, (now - wiz.t)/1000)); wiz.t = now;   // real time, so "keep still" lasts the same on slow machines
-    if (wiz.mode === 'test') testTick(); else stepTick(dt);
+    if (wiz.mode === 'test') testTick(); else if (wiz.mode === 'settings') setTick(); else stepTick(dt);
     wiz.raf = requestAnimationFrame(tick);
   }
   function setBar(id, v, centred){
@@ -1978,7 +2140,7 @@ const Wheel = (() => {
   }
   function testTick(){
     const m = wiz.test;
-    setBar('wtS', m.steer ? steer(m.steer) : null, true);
+    setBar('wtS', m.steer ? steer(m.steer, m) : null, true);
     setBar('wtT', m.thr ? pedal(m.thr) : null); setBar('wtB', m.brk ? pedal(m.brk) : null); setBar('wtC', m.clu ? pedal(m.clu) : null);
     for (const a of ACTIONS) if (m.btn && m.btn[a.k] && btn(m.btn[a.k])) $('wtK').textContent = a.n;
     const off = (m.pads || []).length && !(m.pads || []).some(id => padById(id));
