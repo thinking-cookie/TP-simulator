@@ -425,3 +425,15 @@ test('settings with the wheel unplugged: says so, and the centre button waits', 
   await expect(page.locator('#wsCentre')).toBeDisabled();
   await expect(page.locator('#wsWheelTxt')).toHaveText('—');
 });
+
+// ---------- Controls tutorial links to wheel setup ----------
+test('controls popup: "I have wheels" opens wheel setup', async ({ page }) => {
+  await H.load(page);
+  await H.plug(page, P.splitRising);
+  await page.click('#tutBtn');
+  await expect(page.locator('#tut')).toBeVisible();
+  await page.click('#tutWheel');
+  await expect(page.locator('#tut')).toBeHidden();
+  await expect(page.locator('#wh')).toBeVisible();
+  await expect(page.locator('#whT')).toHaveText('Turn the wheel left', { timeout: 6000 });
+});

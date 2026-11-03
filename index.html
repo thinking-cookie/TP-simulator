@@ -2217,7 +2217,8 @@ const Wheel = (() => {
     const key = best.pad + '#' + best.axis;
     if (key !== w.key){ w.key = key; w.still = 0; w.last = null; w.bottom = false; }
     const v = best.v;
-    if (w.last !== null && Math.abs(v - w.last) < 0.02) w.still += dt; else w.still = 0; w.last = v;
+    // still time counts at most 0.1 s per frame, so one slow frame on a busy computer can't pass for holding still
+    if (w.last !== null && Math.abs(v - w.last) < 0.02) w.still += Math.min(dt, 0.1); else w.still = 0; w.last = v;
     if (steerStep){
       meter(Math.min(1, w.still/0.35));
       if (w.still >= 0.35 && Math.abs(v - best.rest) >= 0.15){
@@ -3306,6 +3307,7 @@ requestAnimationFrame(frame);
 .tut .tip{font-size:12.5px;color:var(--muted);line-height:1.45}
 .tut .tip kbd{font-size:12px}
 .tut .tf{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 18px 16px;border-top:1px solid var(--line);margin-top:14px}
+.tut .tf .acts{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
 .tut .nh{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
 .tut .nh input{width:16px;height:16px;accent-color:var(--accent);margin:0}
 @media (max-width:520px){.tut .lg{grid-template-columns:repeat(2,minmax(0,1fr))}.tut h2{font-size:28px}}
@@ -3324,7 +3326,7 @@ requestAnimationFrame(frame);
     </div>
     <div class="tf">
       <label class="nh" for="tutHide"><input type="checkbox" id="tutHide"> Don't show this again</label>
-      <button class="btn" id="tutGo">Start driving</button>
+      <div class="acts"><button class="btn ghost" id="tutWheel" type="button">🎮 I have wheels</button><button class="btn" id="tutGo">Start driving</button></div>
     </div>
   </div>
 </div>
@@ -3452,6 +3454,8 @@ requestAnimationFrame(frame);
   $('tutAuto').onclick = () => setMode(false);
   $('tutMan').onclick = () => setMode(true);
   $('tutGo').onclick = close;
+  // Players with a steering wheel: close the controls and go straight to wheel setup (or settings, if already set up)
+  $('tutWheel').onclick = () => { close(); const w = $('whBtn'); if (w) w.click(); };
   $('tutX').onclick = close;
   const tb = $('tutBtn'); if (tb) tb.onclick = open;
 
