@@ -49,7 +49,10 @@ async function press(page, { d, b }) {
 async function sweep(page, d, axis, from, to, back) {
   for (const f of [0.2, 0.4, 0.6, 0.8, 1]) { await setAxis(page, d, axis, from + (to - from) * f); await page.waitForTimeout(80); }
   // in the setup popup, hold until it says "Got it" (a slow test machine may need longer), then let go either way
-  if (await page.locator('#wh').isVisible()) await page.locator('#whS', { hasText: 'Got it' }).waitFor({ timeout: 4000 }).catch(() => {});
+  if (await page.locator('#wh').isVisible()) {
+    await page.waitForTimeout(400);   // stay at the bottom long enough for a busy page to read it there
+    await page.locator('#whS', { hasText: 'Got it' }).waitFor({ timeout: 4000 }).catch(() => {});
+  }
   else await page.waitForTimeout(150);
   await setAxis(page, d, axis, back);
 }
