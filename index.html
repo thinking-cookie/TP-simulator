@@ -193,10 +193,10 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
         <div class="k"><kbd>Q</kbd><kbd>E</kbd></div><div>Check left / right blind spot. Hold to look over your shoulder</div>
         <div class="k"><kbd>C</kbd></div><div>Switch view: car-up, north-up, driver's seat</div>
         <div class="k"><kbd>B</kbd></div><div>Driver's seat: 360° camera on the dash screen on / off</div>
-        <div class="k"><kbd>T</kbd></div><div>CDC map: other cars and people on / off</div>
+        <div class="k"><kbd>T</kbd></div><div>Ubi map: other cars and people on / off</div>
         <div class="k"><kbd>G</kbd></div><div>Beginner guide on / off (driver's seat): when to get ready, where to stop, parking sensor beeps</div>
       </div>
-      <div style="color:var(--muted)">Follow the yellow arrow. Before turning inside a blue dashed zone, signal (<kbd>Z</kbd>/<kbd>X</kbd>) and check your blind spot (<kbd>Q</kbd>/<kbd>E</kbd>). On the CDC map, stop at red lights and STOP lines and give way at the zebra.</div>
+      <div style="color:var(--muted)">Follow the yellow arrow. Before turning inside a blue dashed zone, signal (<kbd>Z</kbd>/<kbd>X</kbd>) and check your blind spot (<kbd>Q</kbd>/<kbd>E</kbd>). On the Ubi map, stop at red lights and STOP lines and give way at the zebra.</div>
     </div>
 
     <div class="stagebtns"><button class="btn ghost" id="tutBtn" title="Show the controls">⌨ Controls</button><button class="btn ghost" id="bgBtn" title="Turn the beginner guide on (G)" aria-pressed="false">🎓 Guide</button><button class="btn ghost" id="trafBtn" title="Other cars and people on or off (T)" aria-pressed="true" hidden>🚗 Traffic</button><button class="btn ghost" id="nightBtn" title="Switch day or night (N)" aria-pressed="false">🌙 Night</button><button class="btn ghost" id="sndBtn" title="Sound on or off (M)" aria-pressed="true">🔊 Sound on</button><button class="btn ghost" id="routeBtn" title="Show the route and task order" hidden>☰ Route</button><button class="btn ghost" id="viewBtn" title="Switch view (C)">👁 Car-up</button><button class="btn ghost" id="cpBtn2" title="Choose a checkpoint to practise">↺ Checkpoints</button></div>
@@ -224,7 +224,7 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
     <div class="card">
       <div class="head">
         <div><h1>TP Circuit Trainer</h1><div class="sub">Singapore practical test practice</div><div class="player" id="playerLine" hidden>Playing as <b id="playerName"></b> · <button type="button" id="playerChange">change</button></div></div>
-        <label class="mapsel" for="mapSel"><span class="lbl">Map</span><select id="mapSel"><option value="circuit">Practice circuit</option><option value="cdc">CDC Ubi circuit</option></select></label>
+        <label class="mapsel" for="mapSel"><span class="lbl">Map</span><select id="mapSel"><option value="circuit">Practice circuit</option><option value="cdc">Ubi-style circuit</option></select></label>
         <label class="mapsel" for="gbSel"><span class="lbl">Gearbox</span><select id="gbSel"><option value="auto">Automatic</option><option value="manual">Manual with clutch</option></select></label>
         <div class="hbtns"><button class="btn ghost" id="cpBtn" title="Choose a checkpoint to practise">Checkpoints</button><button class="btn" id="restart">Restart <span style="opacity:.6">↵</span></button></div>
       </div>
@@ -266,7 +266,7 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
       <span class="lbl">Map key</span>
       <div class="mk">
         <i class="sw" style="background:rgba(246,201,21,.25);border:1.5px dashed #f6c915"></i><div><b>Test area.</b> Gold plate shows the name and your task number.</div>
-        <i class="sw" style="background:#16365c;border-radius:50%;width:18px;height:18px;border:1.5px solid #fff"></i><div><b>CDC station number</b> from the circuit diagram.</div>
+        <i class="sw" style="background:#16365c;border-radius:50%;width:18px;height:18px;border:1.5px solid #fff"></i><div><b>Station number</b> on the course.</div>
         <i class="sw" style="background:rgba(98,204,255,.12);border:1.5px dashed #62ccff"></i><div><b>Blind-spot zone.</b> Signal and check before you turn.</div>
         <i class="sw tl"><s></s><s></s><s></s></i><div><b>Traffic light</b> at the centre junction. Stop behind the white line on red, and on amber if you can.</div>
         <i class="sw zb"></i><div><b>Zebra crossing</b> with flashing amber globes. Give way to anyone on it.</div>
@@ -299,7 +299,7 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
         <b style="color:var(--bad)">FAIL</b><div>Not giving way to a pedestrian on the zebra</div>
         <b style="color:var(--bad)">FAIL</b><div>Hitting another car or a person</div>
       </div>
-      <div class="foot">Other keys: <kbd>C</kbd> view, <kbd>P</kbd> pause, <kbd>−</kbd> <kbd>=</kbd> zoom, <kbd>Enter</kbd> restart, <kbd>⌫</kbd> Backspace retry checkpoint, <kbd>H</kbd> horn, <kbd>M</kbd> sound on/off, <kbd>N</kbd> night mode.<br>Sounds: Kenney (CC0) via soundcn.<br>A simplified practice game. Real TP test marking covers more items and differs in detail. CDC road-rule values follow BTT's published guide to the TP marking sheet.</div>
+      <div class="foot">Other keys: <kbd>C</kbd> view, <kbd>P</kbd> pause, <kbd>−</kbd> <kbd>=</kbd> zoom, <kbd>Enter</kbd> restart, <kbd>⌫</kbd> Backspace retry checkpoint, <kbd>H</kbd> horn, <kbd>M</kbd> sound on/off, <kbd>N</kbd> night mode.<br>Sounds: Kenney (CC0) via soundcn.<br>A simplified practice game. Real TP test marking covers more items and differs in detail. Road-rule values follow BTT's published guide to the TP marking sheet.<br><b>Unofficial practice tool.</b> Not affiliated with or endorsed by the Traffic Police, LTA or any driving centre. Check real test rules with your driving school or <a href="https://www.police.gov.sg" target="_blank" rel="noopener">police.gov.sg</a>.</div>
     </div>
   </aside>
 </div>
@@ -418,7 +418,7 @@ function circuitSPath(){
   return pts;
 }
 
-// ---------- Road features (CDC map): test-area markings, traffic light, zebra crossing, STOP lines, other road users ----------
+// ---------- Road features (Ubi map): test-area markings, traffic light, zebra crossing, STOP lines, other road users ----------
 // Fault values follow BTT's guide to the TP marking sheet: a red light, a missed STOP line, not giving way at a zebra
 // and any accident are immediate failures; going on amber costs 8, stopping on a crossing 10, making a car brake 8.
 let trafficOn = true; try { trafficOn = localStorage.getItem('tp-traffic') !== '0'; } catch(e) {}
@@ -1180,7 +1180,7 @@ const MAPS = {
       drawTrees();
       label('CRANK COURSE', 34, 88, 2.4); label('S-COURSE', 129, 78, 2.4); label('SLOPE', 140.5, 78, 2.4);
       label('DIRECTIONAL CHANGE', 122.7, 35.5, 2); label('PARALLEL PARKING', 73.7, 18.6, 2);
-      label('VERTICAL PARKING', 20, 32.5, 1.8, 'left'); label('TRAFFIC POLICE TEST CIRCUIT', 72, 33, 4, 'center', 0.35);
+      label('VERTICAL PARKING', 20, 32.5, 1.8, 'left'); label('PRACTICE TEST CIRCUIT', 72, 33, 4, 'center', 0.35);
       drawKerbs(ctx, kerbPat); drawAsphalt(ctx, '#3c4047');
       dashes([[14,100.5,146,100.5],[14,9.5,146,9.5],[9.5,14,9.5,96],[150.5,14,150.5,63],[150.5,93,150.5,96],[14,53.5,146,53.5]]);
       ctx.save(); ctx.strokeStyle = '#f2f2f2'; ctx.lineWidth = 0.12;
@@ -1192,9 +1192,9 @@ const MAPS = {
     }
   },
 
-  // ComfortDelGro Driving Centre (Ubi) circuit, traced from the CDC circuit diagram at about 0.17 m per diagram pixel.
+  // Ubi-style practice layout, scaled at about 0.17 m per layout pixel.
   cdc: {
-    name: 'CDC Ubi circuit',
+    name: 'Ubi-style circuit',
     build(){
       WW = 180; WH = 118;
       OUTER = {x:2, y:1.7, w:175, h:114.3, r:18};
@@ -1236,7 +1236,7 @@ const MAPS = {
       TARGETS = {crank:[105.5,27], s:[72.3,30], slope:[34.3,88], turn:[132,27], par:[128.9,19.2], ver:[61.5,22]};
       APPROACH = {crank:[105.5,19.5,Math.PI/2], s:[72.3,25,Math.PI/2], slope:[33.6,100,-Math.PI/2], turn:[132,21.2,Math.PI/2], par:[133.5,22.6,0], ver:[70,29.4,Math.PI]};
       START = [8,108.2,0];
-      // Practice order for the Ubi circuit (not CDC's official sequence). Each leg runs from the previous task to the next one,
+      // Practice order for the Ubi-style circuit (not an official test sequence). Each leg runs from the previous task to the next one,
       // keeping left; every waypoint carries the instruction to show while driving towards it.
       ORDER = ['slope','s','ver','crank','turn','par'];
       STN = {slope:12, s:22, ver:24, crank:26, turn:27, par:37};
@@ -1332,14 +1332,14 @@ const MAPS = {
         ctx.setLineDash([0.6,0.5]); ctx.beginPath(); ctx.moveTo(x,y+2.6); ctx.lineTo(x+7.5,y+2.6); ctx.stroke(); ctx.setLineDash([]); }
       ctx.restore();
       drawRoadPaint();
-      // station numbers from the CDC diagram
+      // station numbers
       const B = [[1,485,607],[2,95,250],[3,158,128],[4,598,96],[5,882,360],[12,213,615],[13,95,535],[14,95,448],[15,95,360],[17,493,390],[18,493,505],[19,493,580],
         [20,492,205],[21,442,205],[22,296,205],[23,318,108],[24,362,108],[25,427,108],[26,610,250],[27,764,252],[28,926,175],[35,655,96],[36,705,96],[37,758,96],[38,808,96],[39,860,96],[41,300,618],[42,298,520],[43,300,423]];
       for (const [n,px,py] of B){ const x = px*0.17, y = py*0.17;
         ctx.fillStyle = '#16365c'; ctx.beginPath(); ctx.arc(x,y,1.1,0,7); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.15; ctx.stroke();
         ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 1.1px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.fillText(String(n), x, y+0.05); }
       drawPlates();
-      label('CDC UBI CIRCUIT', 116, 92, 3, 'center', 0.35);
+      label('UBI-STYLE CIRCUIT', 116, 92, 3, 'center', 0.35);
     }
   }
 };
@@ -1609,7 +1609,7 @@ function turnGlyph(t){ return /turn left|left \(Q\)|Check left/i.test(t) ? '←'
 function showBrief(){
   if (!ROUTE) return;
   const items = ORDER.map((k,i) => `<li class="${S.done[k]?'done':''}"><b>${i+1}. ${NAMES[k]}</b><span>Station ${STN[k]}</span><small>${WHERE ? WHERE[k] : ROUTE[k][1].say}</small></li>`).join('');
-  showOv('brief', 'Your route: CDC Ubi', `Drive these six tasks in order. Follow the cyan line on the map and the instruction at the top of the screen.<ol class="route">${items}</ol>${ROAD ? '<span class="note">Road rules are live: a traffic light at the centre junction, a zebra crossing on the middle road and STOP lines at the S-course and crank exits. Press T to turn other cars and people off.</span><br>' : ''}<span class="note">This is a practice order, not CDC's official test sequence. Check the order with your instructor.</span>`);
+  showOv('brief', 'Your route: Ubi-style', `Drive these six tasks in order. Follow the cyan line on the map and the instruction at the top of the screen.<ol class="route">${items}</ol>${ROAD ? '<span class="note">Road rules are live: a traffic light at the centre junction, a zebra crossing on the middle road and STOP lines at the S-course and crank exits. Press T to turn other cars and people off.</span><br>' : ''}<span class="note">This is a practice order, not an official test sequence. Check the order with your instructor.</span>`);
   if (S.status==='run') paused = true;
 }
 function blindCheck(side){ if (S.status!=='run') return; S.lastCheck[side] = S.t; lookPress = side; }
@@ -2843,7 +2843,7 @@ requestAnimationFrame(frame);
     KeyW:{ l:'W', g:'drive', a:'Accelerator. Moves you in the gear shown.' },
     KeyE:{ l:'E', g:'safe', a:'Check your right blind spot. Hold to look over your shoulder.' },
     KeyR:{ l:'R', g:'gear', a:'Reverse. The car must be stopped.', m:'Reverse gear. Clutch down first.' },
-    KeyT:{ l:'T', g:'tool', a:'Other cars and people on or off (CDC map).' },
+    KeyT:{ l:'T', g:'tool', a:'Other cars and people on or off (Ubi map).' },
     KeyI:{ l:'I', g:'gear', a:null, m:'Start the engine.' },
     KeyP:{ l:'P', g:'tool', a:'Pause and resume.' },
     KeyA:{ l:'A', g:'drive', a:'Steer left. Let go and the wheel straightens.' },
