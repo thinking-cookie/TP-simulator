@@ -224,7 +224,7 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
     <div class="card">
       <div class="head">
         <div><h1>TP Circuit Trainer</h1><div class="sub">Singapore practical test practice</div><div class="player" id="playerLine" hidden>Playing as <b id="playerName"></b> · <button type="button" id="playerChange">change</button></div></div>
-        <label class="mapsel" for="mapSel"><span class="lbl">Map</span><select id="mapSel"><option value="circuit">Practice circuit</option><option value="cdc">Ubi-style circuit</option></select></label>
+        <label class="mapsel" for="mapSel"><span class="lbl">Map</span><select id="mapSel"><option value="circuit">Practice circuit</option><option value="cdc">Ubi-style circuit</option><option value="ubi">Ubi roads (public road)</option></select></label>
         <label class="mapsel" for="gbSel"><span class="lbl">Gearbox</span><select id="gbSel"><option value="auto">Automatic</option><option value="manual">Manual with clutch</option></select></label>
         <div class="hbtns"><button class="btn ghost" id="cpBtn" title="Choose a checkpoint to practise">Checkpoints</button><button class="btn" id="restart">Restart <span style="opacity:.6">↵</span></button></div>
       </div>
@@ -292,6 +292,9 @@ ul.check li .tag{font-size:10.5px;color:var(--accent);font-weight:700;letter-spa
       </div>
       <div class="keys" id="roadRules" style="grid-template-columns:auto 1fr" hidden>
         <b style="color:var(--warn)">+8</b><div>Going on amber when you could stop</div>
+        <b style="color:var(--warn)">+8</b><div>Turning on amber without lining up and signalling first</div>
+        <b style="color:var(--warn)">+8</b><div>Not giving way at a give way line (public-road map)</div>
+        <b style="color:var(--muted)">Note</b><div>Lane and keep-left reminders are warnings only</div>
         <b style="color:var(--warn)">+8</b><div>Pulling out in front of a car so it brakes hard</div>
         <b style="color:var(--warn)">+10</b><div>Stopping on the zebra crossing</div>
         <b style="color:var(--bad)">FAIL</b><div>Going on a red light</div>
@@ -425,8 +428,11 @@ let trafficOn = true; try { trafficOn = localStorage.getItem('tp-traffic') !== '
 let TT = 0, AIS = [], PEDS = [], LOOPS = [], prevFront = null, prevSig = [];
 const AI_HALF = 2.2, AI_HW = 0.875, PSTEP = 0.25, SIG_CYCLE = 38;
 const AI_COLS = [{c:'#2f6fd6', taxi:true}, {c:'#b8242f'}, {c:'#c9ccd1'}, {c:'#2b2e33'}];
-function sigState(grp, t){ const u = ((t % SIG_CYCLE) + SIG_CYCLE) % SIG_CYCLE, o = grp === 'EW' ? u : (u + 19) % SIG_CYCLE;
-  return o < 14 ? 'G' : o < 17 ? 'A' : 'R'; }
+let PH = 0;   // phase shift, used to force an amber when the practice scenario fires
+function sigPhase(grp, t){ const u = (((t + PH) % SIG_CYCLE) + SIG_CYCLE) % SIG_CYCLE; return grp === 'EW' ? u : (u + 19) % SIG_CYCLE; }
+function sigState(grp, t){ const o = sigPhase(grp, t); return o < 14 ? 'G' : o < 17 ? 'A' : 'R'; }
+// a green right-turn arrow stays on for 2 s after the main light goes red (protected turn); it means "turn right only"
+function arrowOn(sg, t){ return !!sg.arrow && sigPhase(sg.grp, t) < 19; }
 const SIGCOL = {R:'#ff3b30', A:'#ffb020', G:'#2fe07a'};
 function lineInfo(Ln, p){ const mx = (Ln.a[0]+Ln.b[0])/2, my = (Ln.a[1]+Ln.b[1])/2, d = Ln.dir, dx = p.x-mx, dy = p.y-my;
   return {along: dx*d[0]+dy*d[1], lat: Math.abs(-dx*d[1]+dy*d[0]), half: Math.hypot(Ln.b[0]-Ln.a[0], Ln.b[1]-Ln.a[1])/2}; }
@@ -454,17 +460,33 @@ function buildLoop(corners, r){
 }
 function pathAt(lp, s){ const u = ((s % lp.len) + lp.len) % lp.len, f = u/PSTEP, i = Math.floor(f) % lp.N, j = (i+1) % lp.N, t = f - Math.floor(f);
   return {x: lp.xs[i]+(lp.xs[j]-lp.xs[i])*t, y: lp.ys[i]+(lp.ys[j]-lp.ys[i])*t, h: lp.hs[i]}; }
-function buildRoad(){ LOOPS = ROAD ? ROAD.loops.map(l => buildLoop(l.pts, 6)) : []; }
+function buildLoopDense(pts){
+  const xs = [], ys = []; let carry = 0;
+  for (let i=1;i<pts.length;i++){
+    const a = pts[i-1], b = pts[i], sl = Math.hypot(b[0]-a[0], b[1]-a[1]); let d = carry;
+    while (d < sl){ const t = d/sl; xs.push(a[0]+(b[0]-a[0])*t); ys.push(a[1]+(b[1]-a[1])*t); d += PSTEP; }
+    carry = d - sl;
+  }
+  const N = xs.length, hs = new Float32Array(N);
+  for (let i=0;i<N;i++){ const j = (i+1)%N, k = (i+N-1)%N; hs[i] = Math.atan2(ys[j]-ys[k], xs[j]-xs[k]); }
+  return {xs, ys, hs, N, len: N*PSTEP};
+}
+function buildRoad(){ LOOPS = ROAD ? ROAD.loops.map(l => l.dense ? buildLoopDense(l.pts) : buildLoop(l.pts, 6)) : []; }
 
 function resetTraffic(){
   if (!S) return;
-  S.road = ROAD ? {sig: ROAD.signals.map(() => ({amberDist:null, amberV:0})), stop: ROAD.stops.map(() => ({ok:false})), zt:0, zpen:false, cut:-99, hint:-99} : null;
+  PH = 0;
+  S.road = ROAD ? {sig: ROAD.signals.map(() => ({amberDist:null, amberV:0})), stop: ROAD.stops.map(() => ({ok:false})), zt:0, zpen:false, cut:-99, hint:-99,
+    amb:null, scn:{armed:{}, fired:{}, trig:{}}, lane:{wrong:0, strad:0, last:-99}, gwHint:-99} : null;
   prevFront = null; prevSig = [];
   AIS = []; PEDS = [];
   if (!ROAD) return;
   let n = 0;
+  // public-road maps get a different number of other cars on every reload (2 to 6); the circuit maps keep their fixed set
+  let counts = ROAD.loops.map(l => l.cars);
+  if (MAP.randomNpc){ const total = 2 + Math.floor(Math.random()*5); counts = ROAD.loops.map(() => 0); for (let i=0;i<total;i++) counts[Math.floor(Math.random()*counts.length)]++; }
   ROAD.loops.forEach((l, li) => { const lp = LOOPS[li];
-    for (let j=0;j<l.cars;j++){ AIS.push({loop: li, s: lp.len*(j+0.3)/l.cars + li*41, v: 0, col: AI_COLS[n % AI_COLS.length], blink:null, brk:false}); n++; } });
+    for (let j=0;j<counts[li];j++){ AIS.push({loop: li, s: lp.len*(j+0.3)/counts[li] + li*41, v: 0, col: AI_COLS[n % AI_COLS.length], blink:null, brk:false}); n++; } });
   const m = mid(S.car);
   for (const a of AIS){
     for (let k=0;k<30;k++){ const p = pathAt(LOOPS[a.loop], a.s);
@@ -558,6 +580,76 @@ function trafficStep(dt){
   });
 }
 
+
+// ---------- new road rules: amber turn positioning, give way, lane discipline, amber practice scenario ----------
+const LANE_W = 3.4, wrapPi = a => { a = (a + Math.PI) % (2*Math.PI); if (a < 0) a += 2*Math.PI; return a - Math.PI; };
+// Went through on amber: remember where the car was and whether it was lined up and signalling for a turn
+function startAmberTurn(sg, f, c){
+  const left = [sg.dir[1], -sg.dir[0]], lanes = sg.lanes || 1; let idx = 0;
+  if (sg.edge){ const lat = -((f.x - sg.edge[0])*left[0] + (f.y - sg.edge[1])*left[1]); idx = Math.floor(Math.max(0, lat)/LANE_W); }
+  S.road.amb = {p0:{x:f.x, y:f.y}, th0:c.th, okL: S.signal === 'L' && (lanes < 2 || idx === 0), okR: S.signal === 'R' && (lanes < 2 || idx >= lanes-1)};
+}
+function ambTurnStep(f, c){
+  const R = S.road, A = R.amb; if (!A) return;
+  const dth = wrapPi(c.th - A.th0), trav = Math.hypot(f.x - A.p0.x, f.y - A.p0.y);
+  if (Math.abs(dth) > 0.55){
+    R.amb = null; const right = dth > 0;
+    if (right ? A.okR : A.okL) flash('Lined up and signalled before the amber turn ✓', 'ok', 1700);
+    else { addDemerit(8, 'Turned on amber without positioning for the turn'); flash('NOT POSITIONED TO TURN ON AMBER  +8', 'bad'); }
+  } else if (trav > 30) R.amb = null;
+}
+// Give way line: going over it fast while a car with priority is close counts as not giving way
+function giveWayStep(f, c){
+  const gws = ROAD.giveways; if (!gws) return;
+  gws.forEach(gw => {
+    const now = lineInfo(gw, f), was = lineInfo(gw, prevFront), al = alignOf(c.th, gw.dir);
+    if (was.along < 0 && now.along >= 0 && now.lat < now.half+0.8 && al > 0.5 && c.v > 0.1){
+      const conflict = trafficOn && AIS.some(a => { const p = aiPose(a); return Math.hypot(p.x-gw.j[0], p.y-gw.j[1]) < 26 && a.v > 1; });
+      if (conflict && c.v > 2.2){ addDemerit(8, 'Did not give way at the give way line'); flash('DID NOT GIVE WAY  +8', 'bad'); }
+      else if (conflict) flash('Gave way ✓', 'ok', 1400);
+    }
+  });
+}
+// Lane discipline (warning only, no points): keep left on two-way roads, and do not drive along a lane line
+function laneStep(dt, f, c){
+  if (!MAP.lanes) return;
+  const L = S.road.lane, v = Math.abs(c.v);
+  if (v < 1.5 || c.v < 0){ L.wrong = L.strad = 0; return; }
+  let best = null, near = 0;
+  for (const r of UBI.roads){
+    const pts = r.p;
+    for (let i=0;i<pts.length-1;i++){
+      const a = pts[i], b = pts[i+1], dx = b[0]-a[0], dy = b[1]-a[1], l2 = dx*dx + dy*dy || 1e-9;
+      const t = Math.max(0, Math.min(1, ((f.x-a[0])*dx + (f.y-a[1])*dy)/l2)), px = a[0]+dx*t, py = a[1]+dy*t, d = Math.hypot(f.x-px, f.y-py);
+      if (d < r.w/2 + 1){ near++; if (!best || d < best.d){ const l = Math.sqrt(l2); best = {d, r, tx:dx/l, ty:dy/l, o:((f.x-px)*dy - (f.y-py)*dx)/l}; } }
+    }
+  }
+  const inJunction = ROAD.signals.some(sg => Math.hypot((sg.a[0]+sg.b[0])/2 - f.x, (sg.a[1]+sg.b[1])/2 - f.y) < 22) || (ROAD.giveways || []).some(g => Math.hypot(g.x[0]-f.x, g.x[1]-f.y) < 14);
+  if (!best || inJunction || near > 3){ L.wrong = L.strad = 0; return; }
+  const along = Math.cos(c.th)*best.tx + Math.sin(c.th)*best.ty;                 // +1 = travelling with the way direction
+  if (Math.abs(along) < 0.8){ L.wrong = L.strad = 0; return; }
+  const r = best.r; let wrong = false, strad = false;
+  if (!r.ow) wrong = along > 0 ? best.o < 0.1 : best.o > -0.1;                    // on the right-hand half of a two-way road
+  else if (r.lanes >= 2 && !S.signal){ const u = (r.w/2 - best.o)/LANE_W, k = Math.round(u); strad = k >= 1 && k <= r.lanes-1 && Math.abs(u-k)*LANE_W < 0.45; }
+  L.wrong = wrong ? L.wrong + dt : 0; L.strad = strad ? L.strad + dt : 0;
+  if (S.t - L.last > 8 && (L.wrong > 1.5 || L.strad > 1.5)){
+    L.last = S.t; flash(L.wrong > 1.5 ? 'Keep left: you are on the wrong side of the road' : 'Stay in one lane: do not drive along the lane line', 'info', 2600); L.wrong = L.strad = 0;
+  }
+}
+// Practice scenario: while you travel from one route leg to the next, a green light ahead may switch to amber
+function scenarioStep(f, c){
+  if (!ROAD.scenario || !S.guide.key) return;
+  const key = S.guide.key, sc = S.road.scn;
+  if (sc.armed[key] === undefined){ sc.armed[key] = Math.random() < 0.7; sc.trig[key] = 22 + Math.random()*16; }
+  if (!sc.armed[key] || sc.fired[key] || c.v < 3) return;
+  for (const sg of ROAD.signals){
+    const li = lineInfo(sg, f), al = alignOf(c.th, sg.dir);
+    if (al < 0.85 || li.along > -12 || -li.along > sc.trig[key] || li.lat > li.half+1.5 || sigState(sg.grp, TT) !== 'G') continue;
+    PH += (14 - sigPhase(sg.grp, TT) + SIG_CYCLE) % SIG_CYCLE;
+    sc.fired[key] = true; flash('AMBER LIGHT AHEAD. Decide: stop, or go if too close', 'info', 2600); return;
+  }
+}
+
 // ---------- road rules for the player ----------
 function roadRules(dt){
   const c = S.car, f = toWorld(c, FRONT, 0);
@@ -569,13 +661,15 @@ function roadRules(dt){
     if (st === 'A' && ps === 'G'){ rs.amberDist = (al > 0.7 && now.along < 0 && now.along > -45 && now.lat < now.half+1) ? -now.along : null; rs.amberV = Math.abs(c.v); }
     if (st === 'G') rs.amberDist = null;
     if (was.along < 0 && now.along >= 0 && now.lat < now.half+0.6 && al > 0.5 && c.v > 0.1){
-      if (st === 'R') fail('Proceeded on a red light', 'You crossed the white stop line while the light was red. Stop behind the line and wait for green.');
+      if (st !== 'G' && sg.arrow && arrowOn(sg, TT) && S.signal === sg.arrow){ flash('Green arrow: turn right only ✓', 'ok', 1600); }
+      else if (st === 'R') fail('Proceeded on a red light', 'You crossed the white stop line while the light was red. Stop behind the line and wait for green.');
       else if (st === 'A'){
         if (rs.amberDist !== null && rs.amberDist > rs.amberV*rs.amberV/10 + 2){ addDemerit(8, 'Went on amber when you could stop'); flash('WENT ON AMBER  +8', 'bad'); }
-        else flash('Amber: too close to stop safely, so going is correct', 'info', 1800);
+        else { flash('Amber: too close to stop safely, so going is correct', 'info', 1800); startAmberTurn(sg, f, c); }
       }
     }
   });
+  ambTurnStep(f, c); giveWayStep(f, c); laneStep(dt, f, c); scenarioStep(f, c);
   ROAD.stops.forEach((sp,i) => {
     const now = lineInfo(sp, f), was = lineInfo(sp, prevFront), al = alignOf(c.th, sp.dir), rs = R.stop[i];
     if (!rs.ok && now.lat < now.half+0.8 && al > 0.6 && now.along > -3.6 && now.along < 0.4 && Math.abs(c.v) < 0.08){
@@ -609,7 +703,9 @@ function roadAhead(){
   if (!ROAD) return null;
   const c = S.car, f = toWorld(c, FRONT, 0), out = [];
   ROAD.signals.forEach(sg => { const li = lineInfo(sg, f), al = alignOf(c.th, sg.dir);
-    if (al > 0.6 && li.along < 0 && li.along > -35 && li.lat < li.half+1.5) out.push({k:'light', d:-li.along, st:sigState(sg.grp, TT)}); });
+    if (al > 0.6 && li.along < 0 && li.along > -35 && li.lat < li.half+1.5) out.push({k:'light', d:-li.along, st:sigState(sg.grp, TT), arrow: arrowOn(sg, TT)}); });
+  (ROAD.giveways || []).forEach(gw => { const li = lineInfo(gw, f), al = alignOf(c.th, gw.dir);
+    if (al > 0.6 && li.along < 0.2 && li.along > -30 && li.lat < li.half+1.5) out.push({k:'give', d:Math.max(0,-li.along), cars: trafficOn && AIS.some(a => { const p = aiPose(a); return Math.hypot(p.x-gw.j[0], p.y-gw.j[1]) < 26 && a.v > 1; })}); });
   ROAD.stops.forEach((sp,j) => { const li = lineInfo(sp, f), al = alignOf(c.th, sp.dir);
     if (al > 0.6 && li.along < 0.2 && li.along > -11 && li.lat < li.half+1.5) out.push({k:'stop', d:Math.max(0,-li.along), ok:S.road.stop[j].ok}); });
   const g = zebraGap(f.x, f.y, c.th);
@@ -636,6 +732,13 @@ function drawRoadPaint(){
     const mx = (sp.a[0]+sp.b[0])/2, my = (sp.a[1]+sp.b[1])/2;
     ctx.save(); ctx.translate(mx - sp.dir[0]*2.1, my - sp.dir[1]*2.1); ctx.rotate(Math.atan2(sp.dir[1], sp.dir[0]) + Math.PI/2);
     ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.font = '700 1.5px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, 0); ctx.restore(); }
+  // give way lines: dashed line across the lane, with a triangle painted in front of it
+  for (const gw of ROAD.giveways || []){
+    ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.3; ctx.setLineDash([0.5,0.35]); ctx.beginPath(); ctx.moveTo(gw.a[0],gw.a[1]); ctx.lineTo(gw.b[0],gw.b[1]); ctx.stroke(); ctx.setLineDash([]);
+    const mx = (gw.a[0]+gw.b[0])/2 - gw.dir[0]*1.6, my = (gw.a[1]+gw.b[1])/2 - gw.dir[1]*1.6;
+    ctx.translate(mx, my); ctx.rotate(Math.atan2(gw.dir[1], gw.dir[0]) - Math.PI/2); ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.beginPath(); ctx.moveTo(0,0.6); ctx.lineTo(-0.7,-0.6); ctx.lineTo(0.7,-0.6); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
   // zebra crossing with zig-zag approach lines
   const z = ROAD.zebra;
   ctx.fillStyle = '#f4f4f2'; for (let y = z.y0+0.35; y < z.y1-0.3; y += 1.0) ctx.fillRect(z.x0, y, z.x1-z.x0, 0.5);
@@ -688,6 +791,10 @@ function drawTraffic(now){
   for (const sp of ROAD.stops){ const [x,y] = sp.sign; ctx.save(); ctx.translate(x,y);
     ctx.fillStyle = '#b5121b'; ctx.beginPath(); for (let i=0;i<8;i++){ const a = Math.PI/8 + i*Math.PI/4; ctx.lineTo(Math.cos(a)*0.55, Math.sin(a)*0.55); } ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.06; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = '700 0.36px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, 0.02); ctx.restore(); }
+  // give way signs
+  for (const gw of ROAD.giveways || []){ const [x,y] = gw.sign; ctx.save(); ctx.translate(x,y);
+    ctx.fillStyle = '#c4121c'; ctx.beginPath(); ctx.moveTo(0,0.62); ctx.lineTo(-0.6,-0.45); ctx.lineTo(0.6,-0.45); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0,0.3); ctx.lineTo(-0.3,-0.22); ctx.lineTo(0.3,-0.22); ctx.closePath(); ctx.fill(); ctx.restore(); }
   // zebra beacons (amber globes that flash)
   const bOn = Math.floor(TT*1.4) % 2 === 0;
   for (const [x,y] of ROAD.zebra.beacons){ ctx.fillStyle = '#16181b'; ctx.beginPath(); ctx.arc(x,y,0.42,0,7); ctx.fill(); ctx.fillStyle = bOn ? '#ffb020' : '#7a5a1c'; ctx.beginPath(); ctx.arc(x,y,0.3,0,7); ctx.fill(); }
@@ -698,6 +805,8 @@ function drawTraffic(now){
     ctx.fillStyle = SIGCOL[st] + '40'; ctx.beginPath(); ctx.arc(0,0,1.05,0,7); ctx.fill();
     ctx.fillStyle = '#0d0e10'; rr(-0.62,-0.27,1.24,0.54,0.12); ctx.fill(); ctx.strokeStyle = '#f2c40f'; ctx.lineWidth = 0.05; ctx.stroke();
     [['R',0.38],['A',0],['G',-0.38]].forEach(([k,lx]) => { ctx.fillStyle = st===k ? SIGCOL[k] : '#2d3035'; ctx.beginPath(); ctx.arc(lx,0,0.16,0,7); ctx.fill(); });
+    if (sg.arrow){ const on = arrowOn(sg, TT); ctx.fillStyle = '#0d0e10'; rr(-1.28,-0.27,0.6,0.54,0.12); ctx.fill(); ctx.strokeStyle = '#f2c40f'; ctx.lineWidth = 0.05; ctx.stroke();
+      ctx.fillStyle = on ? SIGCOL.G : '#2d3035'; ctx.beginPath(); ctx.moveTo(-0.98,-0.17); ctx.lineTo(-0.78,0); ctx.lineTo(-0.98,0.17); ctx.closePath(); ctx.fill(); }
     ctx.restore();
   }
   if (!trafficOn) return;
@@ -795,6 +904,16 @@ function drawObjects3D(cam, withTrees){
         if (r > 6){ ctx.fillStyle = night ? '#bbb' : '#fff'; ctx.font = `700 ${r*0.62}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, r*0.04); } }
       ctx.restore();
     }}); }
+    // give way signs
+    for (const gw of ROAD.giveways || []){ const [x,y] = gw.sign; if (!onScr(x,y)) continue; items.push({z: depth(x,y), f(){
+      const front = (cam.ex-x)*-gw.dir[0] + (cam.ey-y)*-gw.dir[1] > 0;
+      pole(x,y,0,1.9,0.07,'#8b929c');
+      const p = pj(x,y,2.15), r = 0.4*F/p[2]; if (p[2] < 0.25) return;
+      ctx.save(); ctx.translate(p[0],p[1]); ctx.beginPath(); ctx.moveTo(0, r*0.9); ctx.lineTo(-r, -r*0.7); ctx.lineTo(r, -r*0.7); ctx.closePath();
+      ctx.fillStyle = front ? shadeHex('#c4121c', NK) : '#7c8189'; ctx.fill();
+      if (front){ ctx.beginPath(); ctx.moveTo(0, r*0.45); ctx.lineTo(-r*0.55, -r*0.4); ctx.lineTo(r*0.55, -r*0.4); ctx.closePath(); ctx.fillStyle = night ? '#bbb' : '#fff'; ctx.fill(); }
+      ctx.restore();
+    }}); }
     // zebra beacons
     const bOn = Math.floor(TT*1.4) % 2 === 0;
     for (const [x,y] of ROAD.zebra.beacons){ if (!onScr(x,y)) continue; items.push({z: depth(x,y), f(){
@@ -851,7 +970,9 @@ function drawRoadCard(x, y, w){
   const h = 54, dist = r.d > 20 ? Math.round(r.d/5)*5 : Math.round(r.d);
   let title, msg, col;
   if (r.k === 'light'){ title = `TRAFFIC LIGHT · ${dist} m`; col = SIGCOL[r.st];
-    msg = r.st === 'R' ? 'Red. Stop behind the white line' : r.st === 'A' ? 'Amber. Stop unless too close to stop' : 'Green. Go if the junction is clear'; }
+    msg = r.arrow && r.st !== 'G' ? 'Green arrow: right turn only. Others stop' : r.st === 'R' ? 'Red. Stop behind the white line' : r.st === 'A' ? 'Amber. Stop unless too close to stop' : 'Green. Go if the junction is clear'; }
+  else if (r.k === 'give'){ title = `GIVE WAY · ${dist} m`; col = r.cars ? '#f5a524' : '#eceef1';
+    msg = r.cars ? 'Car coming. Slow down and give way' : 'Slow down, look right and left'; }
   else if (r.k === 'stop'){ title = `STOP SIGN · ${dist} m`; col = r.ok ? '#3fca8b' : '#ef4a4a';
     msg = r.ok ? 'Stopped ✓ Go when the road is clear' : 'Full stop with your bumper at the line'; }
   else { title = `ZEBRA CROSSING · ${dist} m`; col = r.ped === 'cross' ? '#ef4a4a' : r.ped === 'wait' ? '#f5a524' : '#eceef1';
@@ -861,6 +982,8 @@ function drawRoadCard(x, y, w){
   const ix = x+8, iy = y+7;
   if (r.k === 'light'){ ctx.fillStyle = '#0d0e10'; rr(ix+8, iy, 24, 40, 5); ctx.fill(); ctx.strokeStyle = '#f2c40f'; ctx.lineWidth = 1; ctx.stroke();
     [['R',8],['A',20],['G',32]].forEach(([k,dy]) => { ctx.fillStyle = r.st===k ? SIGCOL[k] : '#2d3035'; ctx.beginPath(); ctx.arc(ix+20, iy+dy, 5, 0, 7); ctx.fill(); }); }
+  else if (r.k === 'give'){ ctx.save(); ctx.translate(ix+20, iy+22); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0,19); ctx.lineTo(-20,-15); ctx.lineTo(20,-15); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#c4121c'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.stroke(); ctx.restore(); }
   else if (r.k === 'stop'){ ctx.save(); ctx.translate(ix+20, iy+20); ctx.fillStyle = '#c4121c'; ctx.beginPath(); for (let i=0;i<8;i++){ const a = Math.PI/8 + i*Math.PI/4; ctx.lineTo(Math.cos(a)*19, Math.sin(a)*19); } ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = '700 12px "Barlow Condensed","Arial Narrow",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('STOP', 0, 1); ctx.restore(); }
   else { ctx.fillStyle = '#3c4047'; rr(ix, iy, 40, 40, 5); ctx.fill(); ctx.fillStyle = '#f4f4f2'; for (let i=0;i<5;i++) ctx.fillRect(ix+4, iy+4+i*7.4, 32, 3.6);
@@ -1145,6 +1268,8 @@ function queueKerbs3D(items, cam, maxD){
   }
 }
 
+const UBI = {"W":445.2,"H":608.2,"roads":[{"p":[[493.66,-4.63],[405.41,53.26]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{}},{"p":[[189.56,428.82],[197.14,469.34]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:forward":"left;right|right"}},{"p":[[67.79,335.57],[60.93,333.88],[55.18,334.82],[37.77,341.53]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[351.43,82.0],[339.47,87.7],[206.85,142.4]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{"turn:lanes":"through|through"}},{"p":[[347.02,72.54],[351.43,82.0]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[197.14,469.34],[202.9,479.7],[212.72,490.17],[222.79,495.24],[235.99,497.64]],"w":3.4,"ow":1,"n":"","c":"tertiary_link","lanes":1,"tl":{"turn:lanes":"left"}},{"p":[[169.86,513.61],[180.12,505.3],[188.17,495.25]],"w":3.4,"ow":1,"n":"","c":"tertiary_link","lanes":1,"tl":{"turn:lanes":"left"}},{"p":[[86.68,371.94],[74.17,341.19],[70.29,336.22],[67.79,335.57]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{"turn:lanes":"through|through"}},{"p":[[386.8,64.64],[351.43,82.0]],"w":10.2,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":3,"tl":{"turn:lanes":"left|through|through"}},{"p":[[139.03,160.28],[130.18,101.02]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:backward":"left;through|through;right"}},{"p":[[206.85,142.4],[140.72,169.76]],"w":13.6,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":4,"tl":{"turn:lanes":"left|through|through|right"}},{"p":[[139.03,160.28],[140.72,169.76]],"w":6.8,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":2,"tl":{}},{"p":[[139.03,160.28],[155.08,152.89],[278.09,102.42]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{}},{"p":[[184.69,397.92],[183.43,388.62]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:forward":"through"}},{"p":[[203.34,505.7],[169.86,513.61]],"w":10.2,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":3,"tl":{"turn:lanes:forward":"through|through;right","turn:lanes:backward":"through"}},{"p":[[140.72,169.76],[125.54,176.2]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{}},{"p":[[386.86,468.66],[235.99,497.64]],"w":10.2,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":3,"tl":{"turn:lanes:forward":"through|through;right"}},{"p":[[121.46,55.61],[118.95,42.2]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{}},{"p":[[130.18,101.02],[121.46,55.61]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:backward":"left;through|through;right"}},{"p":[[116.94,525.96],[77.17,535.92]],"w":10.2,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":3,"tl":{}},{"p":[[347.02,72.54],[392.69,48.55],[458.69,6.87]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{}},{"p":[[441.13,457.16],[386.86,468.66]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[235.99,497.64],[203.34,505.7]],"w":10.2,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":3,"tl":{"turn:lanes:forward":"through|through;right"}},{"p":[[169.86,513.61],[116.94,525.96]],"w":10.2,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":3,"tl":{"turn:lanes:forward":"through|through;right","turn:lanes:backward":"through"}},{"p":[[197.14,469.34],[203.34,505.7]],"w":10.2,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":3,"tl":{"turn:lanes:forward":"right|right"}},{"p":[[351.43,82.0],[378.46,138.14]],"w":10.2,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":3,"tl":{"turn:lanes:backward":"left|right"}},{"p":[[413.71,210.01],[423.71,218.34],[429.67,221.0],[436.96,221.62]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{"turn:lanes:forward":"through"}},{"p":[[149.25,207.18],[143.27,181.04]],"w":17.0,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":5,"tl":{"turn:lanes:forward":"left|through|right"}},{"p":[[77.17,535.92],[54.33,541.39]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[48.1,198.28],[119.89,169.0],[139.03,160.28]],"w":10.2,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":3,"tl":{"turn:lanes":"left;through|through|right"}},{"p":[[9.08,213.22],[48.1,198.28]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{"turn:lanes":"left;through|through"}},{"p":[[189.56,428.82],[184.69,397.92]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:backward":"left;right"}},{"p":[[278.09,102.42],[330.71,80.32],[347.02,72.54]],"w":10.2,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":3,"tl":{"turn:lanes":"through|through|right"}},{"p":[[93.74,398.64],[91.76,387.65]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[102.1,447.04],[94.92,407.76]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{"turn:lanes":"left;through|through"}},{"p":[[30.84,344.16],[10.27,352.07]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[37.77,341.53],[30.84,344.16]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[4.38,354.46],[-12.01,360.83]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[10.27,352.07],[4.38,354.46]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[118.95,42.2],[105.58,-28.99]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{}},{"p":[[265.54,-2.17],[239.53,8.29]],"w":6.8,"ow":0,"n":"Ubi Road 4","c":"residential","lanes":2,"tl":{}},{"p":[[212.79,18.91],[199.94,24.39]],"w":6.8,"ow":0,"n":"Ubi Road 4","c":"residential","lanes":2,"tl":{"turn:lanes:forward":"left;right"}},{"p":[[239.53,8.29],[223.28,14.78]],"w":6.8,"ow":0,"n":"Ubi Road 4","c":"residential","lanes":2,"tl":{}},{"p":[[151.14,217.76],[149.25,207.18]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{}},{"p":[[378.46,138.14],[391.51,166.49]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{"turn:lanes:backward":"through"}},{"p":[[158.21,252.97],[151.14,217.76]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:forward":"through|right"}},{"p":[[391.51,166.49],[405.02,196.16]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[436.96,221.62],[446.61,220.87],[483.83,212.97]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[94.92,407.76],[93.74,398.64]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[116.94,525.96],[102.1,447.04]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{"turn:lanes":"through|through"}},{"p":[[91.76,387.65],[86.68,371.94]],"w":6.8,"ow":1,"n":"Ubi Crescent","c":"residential","lanes":2,"tl":{}},{"p":[[469.27,451.77],[441.13,457.16]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[143.27,181.04],[140.72,169.76]],"w":17.0,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":5,"tl":{"turn:lanes:forward":"left|through|right"}},{"p":[[188.17,495.25],[197.14,469.34]],"w":3.4,"ow":1,"n":"","c":"tertiary_link","lanes":1,"tl":{"turn:lanes":"left"}},{"p":[[405.41,53.26],[397.43,58.78],[386.8,64.64]],"w":6.8,"ow":1,"n":"Ubi Avenue 2","c":"secondary","lanes":2,"tl":{"turn:lanes":"through|through"}},{"p":[[223.28,14.78],[212.79,18.91]],"w":6.8,"ow":0,"n":"Ubi Road 4","c":"residential","lanes":2,"tl":{}},{"p":[[180.02,31.99],[121.46,55.61]],"w":6.8,"ow":0,"n":"Ubi Road 4","c":"residential","lanes":2,"tl":{"turn:lanes:forward":"left;right"}},{"p":[[199.94,24.39],[180.02,31.99]],"w":6.8,"ow":0,"n":"Ubi Road 4","c":"residential","lanes":2,"tl":{"turn:lanes:forward":"left;right"}},{"p":[[405.02,196.16],[413.71,210.01]],"w":6.8,"ow":0,"n":"Ubi Avenue 1","c":"tertiary","lanes":2,"tl":{}},{"p":[[185.35,151.22],[173.27,161.54],[165.33,169.61],[158.12,179.34],[153.08,190.29],[150.63,200.28],[150.16,212.55]],"w":3.4,"ow":1,"n":"","c":"tertiary_link","lanes":1,"tl":{}},{"p":[[183.43,388.62],[165.92,292.88]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:forward":"through"}},{"p":[[165.92,292.88],[158.21,252.97]],"w":13.6,"ow":0,"n":"Ubi Road 3","c":"tertiary","lanes":4,"tl":{"turn:lanes:forward":"through"}}],"signals":[{"j":"Ubi Ave 1 / Ubi Rd 3","grp":"EW","a":[179.95,511.07],"b":[178.81,506.26],"dir":[0.973,-0.23],"head":[180.04,504.94],"lanes":1,"edge":[178.81,506.26],"arrow":null,"name":"Ubi Avenue 1","c":[203.3,505.7]},{"j":"Ubi Ave 1 / Ubi Rd 3","grp":"EW","a":[226.67,500.09],"b":[227.86,504.9],"dir":[-0.971,0.24],"head":[226.64,506.23],"lanes":1,"edge":[227.86,504.9],"arrow":null,"name":"Ubi Avenue 1","c":[203.3,505.7]},{"j":"Ubi Ave 1 / Ubi Rd 3","grp":"NS","a":[199.45,482.02],"b":[204.33,481.18],"dir":[0.168,0.986],"head":[205.57,482.49],"lanes":1,"edge":[204.33,481.18],"arrow":null,"name":"Ubi Road 3","c":[203.3,505.7]},{"j":"Ubi Ave 2 / Ubi Rd 3","grp":"EW","a":[157.38,155.51],"b":[162.58,168.08],"dir":[-0.924,0.382],"head":[161.58,169.57],"lanes":4,"edge":[162.58,168.08],"arrow":"R","name":"Ubi Avenue 2","c":[139.9,165.0]},{"j":"Ubi Ave 2 / Ubi Rd 3","grp":"NS","a":[136.34,141.28],"b":[142.92,140.3],"dir":[0.148,0.989],"head":[144.13,141.64],"lanes":2,"edge":[142.92,140.3],"arrow":null,"name":"Ubi Road 3","c":[139.9,165.0]},{"j":"Ubi Ave 2 / Ubi Rd 3","grp":"NS","a":[144.82,188.51],"b":[136.68,190.37],"dir":[-0.223,-0.975],"head":[135.38,189.13],"lanes":2,"edge":[136.68,190.37],"arrow":null,"name":"Ubi Road 3","c":[139.9,165.0]},{"j":"Ubi Ave 1 / Ubi Ave 2","grp":"EW","a":[368.48,67.95],"b":[372.98,77.11],"dir":[-0.898,0.441],"head":[372.07,78.66],"lanes":3,"edge":[372.98,77.11],"arrow":null,"name":"Ubi Avenue 2","c":[349.2,77.3]},{"j":"Ubi Ave 1 / Ubi Ave 2","grp":"EW","a":[327.83,87.06],"b":[323.88,77.66],"dir":[0.922,-0.387],"head":[324.87,76.15],"lanes":3,"edge":[323.88,77.66],"arrow":"R","name":"Ubi Avenue 2","c":[349.2,77.3]},{"j":"Ubi Ave 1 / Ubi Ave 2","grp":"NS","a":[359.44,98.99],"b":[354.98,101.14],"dir":[-0.434,-0.901],"head":[353.43,100.22],"lanes":1,"edge":[354.98,101.14],"arrow":null,"name":"Ubi Avenue 1","c":[349.2,77.3]}],"giveways":[{"x":[348.47,75.66],"a":[348.61,75.59],"b":[351.55,74.22],"dir":[0.423,0.906],"sign":[352.55,73.75],"j":[351.4,82.0],"name":"Ubi Avenue 1","link":false,"src":"inferred"},{"x":[229.1,496.39],"a":[228.8,498.06],"b":[229.41,494.72],"dir":[0.984,0.179],"sign":[229.6,493.63],"j":[236.0,497.6],"name":"","link":true,"src":"inferred"},{"x":[138.0,153.36],"a":[138.14,153.33],"b":[144.72,152.35],"dir":[0.148,0.989],"sign":[145.81,152.19],"j":[139.0,160.3],"name":"Ubi Road 3","link":false,"src":"inferred"},{"x":[354.47,88.31],"a":[354.33,88.37],"b":[349.87,90.52],"dir":[-0.434,-0.901],"sign":[348.88,91.0],"j":[351.4,82.0],"name":"Ubi Avenue 1","link":false,"src":"inferred"},{"x":[194.85,475.95],"a":[196.46,476.51],"b":[193.24,475.4],"dir":[0.327,-0.945],"sign":[192.2,475.04],"j":[197.1,469.3],"name":"","link":true,"src":"inferred"},{"x":[127.95,52.99],"a":[128.01,53.13],"b":[129.22,56.14],"dir":[-0.927,0.374],"sign":[129.64,57.16],"j":[121.5,55.6],"name":"Ubi Road 4","link":false,"src":"inferred"},{"x":[150.43,205.56],"a":[148.73,205.49],"b":[152.13,205.62],"dir":[-0.038,0.999],"sign":[153.23,205.66],"j":[150.2,212.6],"name":"","link":true,"src":"inferred"}],"centres":{"Ubi Ave 1 / Ubi Rd 3":[203.3381412752179,505.6991315999944],"Ubi Ave 2 / Ubi Rd 3":[139.87496188561548,165.0206375999944],"Ubi Ave 1 / Ubi Ave 2":[349.22833305249316,77.26911119999994]},"loops":[[[200.8,506.1],[197.7,487.9],[193.8,469.9],[190.0,449.7],[186.2,429.4],[183.8,413.9],[181.3,398.4],[180.1,389.2],[177.2,373.3],[174.2,357.3],[171.3,341.4],[168.4,325.4],[165.5,309.4],[162.6,293.5],[158.7,273.6],[154.9,253.6],[151.3,236.0],[147.8,218.4],[145.1,208.1],[139.1,182.0],[139.1,170.1],[137.7,159.2],[154.4,151.3],[169.8,145.0],[185.2,138.7],[200.6,132.4],[215.9,126.1],[231.3,119.8],[246.7,113.5],[262.1,107.2],[276.8,99.3],[294.3,91.9],[311.9,84.6],[329.3,77.2],[347.2,70.8],[353.0,82.8],[340.2,89.3],[325.4,95.3],[310.6,101.4],[295.9,107.5],[281.2,113.6],[266.4,119.7],[251.7,125.7],[237.0,131.8],[222.2,137.9],[208.8,147.1],[192.3,154.0],[175.7,160.8],[159.2,167.6],[144.1,172.4],[147.4,180.1],[152.6,206.5],[154.5,217.1],[158.0,234.7],[161.5,252.3],[165.4,272.3],[169.3,292.2],[172.2,308.2],[175.1,324.2],[178.0,340.1],[180.9,356.1],[183.9,372.1],[186.8,388.1],[188.1,397.4],[190.5,412.8],[192.9,428.2],[196.7,448.5],[199.6,468.9],[202.8,487.1],[205.9,505.3]],[[352.2,83.5],[340.2,89.3],[325.4,95.3],[310.6,101.4],[295.9,107.5],[281.2,113.6],[266.4,119.7],[251.7,125.7],[237.0,131.8],[222.2,137.9],[208.8,147.1],[192.3,154.0],[175.7,160.8],[159.2,167.6],[144.1,172.4],[147.4,180.1],[152.6,206.5],[154.5,217.1],[158.0,234.7],[161.5,252.3],[165.4,272.3],[169.3,292.2],[172.2,308.2],[175.1,324.2],[178.0,340.1],[180.9,356.1],[183.9,372.1],[186.8,388.1],[188.1,397.4],[190.5,412.8],[192.9,428.2],[196.7,448.5],[199.6,468.9],[202.8,487.1],[203.3,505.7],[197.7,487.9],[193.8,469.9],[190.0,449.7],[186.2,429.4],[183.8,413.9],[181.3,398.4],[180.1,389.2],[177.2,373.3],[174.2,357.3],[171.3,341.4],[168.4,325.4],[165.5,309.4],[162.6,293.5],[158.7,273.6],[154.9,253.6],[151.3,236.0],[147.8,218.4],[145.1,208.1],[139.1,182.0],[139.1,170.1],[137.7,159.2],[154.4,151.3],[169.8,145.0],[185.2,138.7],[200.6,132.4],[215.9,126.1],[231.3,119.8],[246.7,113.5],[262.1,107.2],[276.8,99.3],[294.3,91.9],[311.9,84.6],[329.3,77.2],[347.2,70.8],[353.0,81.3]]],"tour":[[116.4,523.5],[134.0,519.4],[151.6,515.2],[169.3,511.1],[186.0,507.2],[201.2,504.4],[197.7,487.9],[193.8,469.9],[190.0,449.7],[186.2,429.4],[183.8,413.9],[181.3,398.4],[180.1,389.2],[177.2,373.3],[174.2,357.3],[171.3,341.4],[168.4,325.4],[165.5,309.4],[162.6,293.5],[158.7,273.6],[154.9,253.6],[151.3,236.0],[147.8,218.4],[145.1,208.1],[139.1,182.0],[139.1,170.1],[137.7,159.2],[154.4,151.3],[169.8,145.0],[185.2,138.7],[200.6,132.4],[215.9,126.1],[231.3,119.8],[246.7,113.5],[262.1,107.2],[276.8,99.3],[294.3,91.9],[311.9,84.6],[329.3,77.2],[347.2,70.8],[353.7,80.9],[360.5,94.9],[367.2,109.0],[374.0,123.0],[380.8,137.0]],"tour_names":["Ubi Avenue 1","Ubi Avenue 1","Ubi Avenue 1","Ubi Avenue 1","Ubi Avenue 1","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Road 3","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 2","Ubi Avenue 1","Ubi Avenue 1","Ubi Avenue 1","Ubi Avenue 1","Ubi Avenue 1"]};
+// Roads, lights and tour are built from OpenStreetMap by tools/build_ubi_map.py. Arrow lights and give way signs are inferred, not surveyed.
 const MAPS = {
   circuit: {
     name: 'Practice circuit',
@@ -1188,6 +1313,71 @@ const MAPS = {
       ctx.setLineDash([0.6,0.5]); ctx.beginPath(); ctx.moveTo(px,py+0.06); ctx.lineTo(px+pw,py+0.06); ctx.stroke(); ctx.setLineDash([]);
       const [vx,vy,vw,vh] = VER_LOT; ctx.beginPath(); ctx.moveTo(vx,vy+0.1); ctx.lineTo(vx+vw-0.1,vy+0.1); ctx.lineTo(vx+vw-0.1,vy+vh-0.1); ctx.lineTo(vx,vy+vh-0.1); ctx.stroke();
       ctx.setLineDash([0.6,0.5]); ctx.beginPath(); ctx.moveTo(vx+0.06,vy); ctx.lineTo(vx+0.06,vy+vh); ctx.stroke();
+      ctx.restore();
+    }
+  },
+
+  // Public roads around Ubi / Paya Lebar, built from OpenStreetMap data (see tools/build_ubi_map.py). Route legs replace the six test courses.
+  ubi: {
+    name: 'Ubi roads (public road)', ms: 4, tx: 5, randomNpc: true, legs: true, lanes: true,
+    build(){
+      WW = Math.ceil(UBI.W); WH = Math.ceil(UBI.H);
+      RECTS = []; CRANK = []; PAR_LOT = [-50,-50,1,1]; VER_LOT = [-50,-50,1,1]; VER_H = 0; TURN_RECT = [-50,-50,1,1]; TURN_MOUTH = -50;
+      SLOPE_RECT = [-60,-60,1,1]; STOP_LINE_Y = -60; CREST_Y = -60; SPATH = []; S_TOPX = 0; GATES = {}; ZONES = []; ISLANDS = []; OUTER = null;
+      COURSES = null; SIGNPOSTS = null; MARK = null; MAP_TIPS = {};
+      const tr = UBI.tour, cum = [0]; for (let i=1;i<tr.length;i++) cum.push(cum[i-1] + Math.hypot(tr[i][0]-tr[i-1][0], tr[i][1]-tr[i-1][1]));
+      const TL = cum[cum.length-1];
+      const at = sv => { sv = Math.max(0, Math.min(TL, sv)); let i = 1; while (i < cum.length-1 && cum[i] < sv) i++; const t = (sv-cum[i-1])/((cum[i]-cum[i-1]) || 1); return [tr[i-1][0]+(tr[i][0]-tr[i-1][0])*t, tr[i-1][1]+(tr[i][1]-tr[i-1][1])*t]; };
+      const hd = sv => { const a = at(sv-3), b = at(sv+3); return Math.atan2(b[1]-a[1], b[0]-a[0]); };
+      const cs = Object.values(UBI.centres), sc = cs.map(c => { let bs = 0, bd = 1e9; for (let sv=0; sv<=TL; sv+=1){ const q = at(sv), d = Math.hypot(q[0]-c[0], q[1]-c[1]); if (d < bd){ bd = d; bs = sv; } } return bs; });
+      const bounds = [0, sc[0]+50, sc[1]+50, TL];
+      const roadAt = sv => { const q = at(sv); let best = '', bd = 1e9; for (const r of UBI.roads){ if (!r.n) continue; for (const p of r.p){ const d = Math.hypot(p[0]-q[0], p[1]-q[1]); if (d < bd){ bd = d; best = r.n; } } } return best; };
+      const turnWord = sv => { const d = wrapPi(hd(sv+28) - hd(sv-28)); return d > 0.5 ? 'right' : d < -0.5 ? 'left' : 'straight'; };
+      ORDER = ['l1','l2','l3'];
+      Object.assign(NAMES, {l1:'Ubi Ave 1 to Ubi Rd 3', l2:'Ubi Rd 3 to Ubi Ave 2', l3:'Ubi Ave 2 to Ubi Ave 1'});
+      STN = {l1:'Leg 1', l2:'Leg 2', l3:'Leg 3'}; ROUTE = {}; TARGETS = {}; APPROACH = {}; WHERE = {};
+      ORDER.forEach((k,i) => {
+        const a = bounds[i], b = bounds[i+1], jn = sc[i] ?? sc[2], wps = [{p:at(a), say:''}];
+        for (let sv = a+22; sv < b-4; sv += 22){
+          const near = sc.findIndex((c,ci) => sv >= c-62 && sv <= c-4), nm = roadAt(sv+8);
+          wps.push({p:at(sv), say: near >= 0 && (turnWord(sc[near]) !== 'straight') ? `At the traffic light, turn ${turnWord(sc[near])} onto ${roadAt(sc[near]+30)}. Get in lane and signal early` : near >= 0 ? 'At the traffic light, go straight' : `Keep left on ${nm || 'the road'}`});
+        }
+        wps.push({p:at(b), say:'Continue and keep left'});
+        wps[0].say = wps[1] ? wps[1].say : '';
+        ROUTE[k] = wps; TARGETS[k] = at(b); APPROACH[k] = [at(a)[0], at(a)[1], hd(a+1)];
+        WHERE[k] = i === 0 ? 'Start on Ubi Avenue 1, head for Ubi Road 3. Watch for the give way line at the left slip lane.' : i === 1 ? 'North on Ubi Road 3. Get into the right lane for the traffic light, then turn right onto Ubi Avenue 2.' : 'Along Ubi Avenue 2 to the big junction, then onto Ubi Avenue 1.';
+      });
+      MAP_TIPS = {l1:'Keep left. The left slip lane has a give way line: slow down, look right, and go only when clear.', l2:'Move into the right lane early, signal right, and check your blind spot. If the light goes amber, decide: stop, or go if too close.', l3:'Keep in one lane through the junction. Watch for the green arrow: it means right turn only.'};
+      START = [at(0)[0], at(0)[1], hd(1)];
+      const dummyZ = {x0:-100, x1:-99, y0:-100, y1:-99, wait:{N:[-99.5,-100], S:[-99.5,-99]}, beacons:[], zig:[], zigY:[]};
+      const lanePath = pts => pts;
+      ROAD = {
+        signals: UBI.signals.map(g => ({grp:g.grp, a:g.a, b:g.b, dir:g.dir, head:g.head, arrow:g.arrow, lanes:g.lanes, edge:g.edge})),
+        stops: [], giveways: UBI.giveways, zebra: dummyZ,
+        loops: UBI.loops.map(pts => ({pts:lanePath(pts), cars:1, dense:true})),
+        arrows: UBI.signals.map(g => { const mx = (g.a[0]+g.b[0])/2 - g.dir[0]*12, my = (g.a[1]+g.b[1])/2 - g.dir[1]*12; return [mx, my, Math.atan2(g.dir[1], g.dir[0])]; }),
+        solid: [], scenario: true
+      };
+    },
+    trees: {count:150, rmin:1.2, rspan:1.4, margin:1.8, avoid:[]},
+    paint(g, kerb, asph){
+      g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+      for (const [col, extra] of [[kerb, 2*K], [asph, 0]]){ g.strokeStyle = col;
+        for (const r of UBI.roads){ g.lineWidth = r.w + extra; g.beginPath(); r.p.forEach((q,i) => i ? g.lineTo(q[0],q[1]) : g.moveTo(q[0],q[1])); g.stroke(); } }
+      g.restore();
+    },
+    draw(now){
+      ctx.fillStyle = '#4a893c'; ctx.fillRect(0,0,WW,WH); ctx.fillStyle = '#518f42'; for (let x=0;x<WW;x+=10) ctx.fillRect(x,0,5,WH);
+      drawTrees();
+      MAP.paint(ctx, kerbPat, '#3c4047');
+      ctx.save(); ctx.lineCap = 'butt'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 0.13;
+      const off = (pts, o) => pts.map((q,i) => { const a = pts[Math.max(0,i-1)], b = pts[Math.min(pts.length-1,i+1)], l = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1; return [q[0] + (b[1]-a[1])/l*o, q[1] - (b[0]-a[0])/l*o]; });
+      const line = (pts, dash) => { ctx.setLineDash(dash); ctx.beginPath(); pts.forEach((q,i) => i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1])); ctx.stroke(); };
+      for (const r of UBI.roads){
+        if (r.ow){ for (let k=1;k<r.lanes;k++) line(off(r.p, r.w/2 - k*LANE_W), [3,5]); }
+        else if (r.lanes >= 4){ line(off(r.p, 0.12), []); line(off(r.p, -0.12), []); for (const o of [-LANE_W, LANE_W]) line(off(r.p, o), [3,5]); }
+        else line(r.p, [4,6]);
+      }
       ctx.restore();
     }
   },
@@ -1290,7 +1480,8 @@ const MAPS = {
         arrows: [[22,108.2,0],[62,108.2,0],[52,113.3,Math.PI],[118,113.3,Math.PI],[22,48,0],[78.5,48,0],[132,48,0],[142,55,Math.PI],[70,55,Math.PI],[24,55,Math.PI],
                  [88.8,82,-Math.PI/2],[88.8,38,-Math.PI/2],[96.5,36,Math.PI/2],[96.5,80,Math.PI/2],[60,11.5,Math.PI],[130,11.5,Math.PI],[40,5,0],[110,5,0],
                  [11.4,30,Math.PI/2],[11.4,82,Math.PI/2],[5.1,70,-Math.PI/2],[5.1,30,-Math.PI/2],[162.5,36,-Math.PI/2],[167,30,Math.PI/2]],
-        solid: [[92.65,34,92.65,44.0],[92.65,59.8,92.65,70],[74,51.5,84.6,51.5],[100.8,51.5,111,51.5]]
+        solid: [[92.65,34,92.65,44.0],[92.65,59.8,92.65,70],[74,51.5,84.6,51.5],[100.8,51.5,111,51.5]],
+        scenario: true
       };
       MAP_TIPS = { ver: 'Drive west past bay 24 and stop. The bay is on your right, so tap E, then reverse in on full right lock. Straighten up and hold still for 1.5 s, facing the road.' };
     },
@@ -1402,7 +1593,7 @@ function drawAsphalt(ctx, style){
 }
 
 // ---------- Collision mask ----------
-const MS = 10;
+let MS = 10, TX = 12;
 let mask = null;
 function buildMask(){
   const c = document.createElement('canvas'); c.width = WW*MS; c.height = WH*MS;
@@ -1471,7 +1662,7 @@ function buildLamps(){
   for (const [lx,ly] of LAMPS) for (let y=Math.max(0,ly-11|0); y<Math.min(LH,ly+12); y++) for (let x=Math.max(0,lx-11|0); x<Math.min(LW,lx+12); x++){
     const d = Math.hypot(x+0.5-lx, y+0.5-ly); if (d < 11) LIGHT[y*LW+x] += 0.85*Math.pow(1-d/11, 1.6); }
 }
-function loadMap(id){ MAPID = MAPS[id] ? id : 'circuit'; MAP = MAPS[MAPID]; MAP.build(); buildMask(); buildTrees(); buildMini(); buildLamps(); buildRoad(); buildKerb3D(); setTrafBtn(); }
+function loadMap(id){ MAPID = MAPS[id] ? id : 'circuit'; MAP = MAPS[MAPID]; MAP.build(); MS = MAP.ms || 10; TX = MAP.tx || 12; buildMask(); buildTrees(); buildMini(); buildLamps(); buildRoad(); buildKerb3D(); setTrafBtn(); }
 let savedMap = 'circuit'; try { savedMap = localStorage.getItem('tp-map') || 'circuit'; } catch(e) {}
 loadMap(savedMap);
 
@@ -1609,7 +1800,7 @@ function turnGlyph(t){ return /turn left|left \(Q\)|Check left/i.test(t) ? '←'
 function showBrief(){
   if (!ROUTE) return;
   const items = ORDER.map((k,i) => `<li class="${S.done[k]?'done':''}"><b>${i+1}. ${NAMES[k]}</b><span>Station ${STN[k]}</span><small>${WHERE ? WHERE[k] : ROUTE[k][1].say}</small></li>`).join('');
-  showOv('brief', 'Your route: Ubi-style', `Drive these six tasks in order. Follow the cyan line on the map and the instruction at the top of the screen.<ol class="route">${items}</ol>${ROAD ? '<span class="note">Road rules are live: a traffic light at the centre junction, a zebra crossing on the middle road and STOP lines at the S-course and crank exits. Press T to turn other cars and people off.</span><br>' : ''}<span class="note">This is a practice order, not an official test sequence. Check the order with your instructor.</span>`);
+  showOv('brief', 'Your route: ' + (MAPID === 'ubi' ? 'Ubi roads' : 'Ubi-style'), `Drive these six tasks in order. Follow the cyan line on the map and the instruction at the top of the screen.<ol class="route">${items}</ol>${ROAD ? '<span class="note">Road rules are live: a traffic light at the centre junction, a zebra crossing on the middle road and STOP lines at the S-course and crank exits. Press T to turn other cars and people off.</span><br>' : ''}<span class="note">This is a practice order, not an official test sequence. Check the order with your instructor.</span>`);
   if (S.status==='run') paused = true;
 }
 function blindCheck(side){ if (S.status!=='run') return; S.lastCheck[side] = S.t; lookPress = side; }
@@ -1917,8 +2108,8 @@ function rules(dt){
     else if (inRect(m,g1)){ if (st[key]===0) complete(key); st[key] = 1; }
     else if (!region(m)) st[key] = null;
   };
-  gate('crank', p => CRANK.some(r => inRect(p,r)));
-  gate('s', nearS);
+  if (GATES.crank){ gate('crank', p => CRANK.some(r => inRect(p,r))); gate('s', nearS); }
+  if (MAP.legs) for (const k of ORDER){ if (!S.done[k] && Math.hypot(m.x - TARGETS[k][0], m.y - TARGETS[k][1]) < 7) complete(k); }
 
   // Parking
   const pts = LOCAL_PTS.map(([lx,ly]) => toWorld(c,lx,ly));
@@ -2256,7 +2447,7 @@ function drawNight(xf){
 }
 
 // ---------- Driver's seat view ----------
-const TX = 12, TPAD = 40, GRASS32 = 0xff295f2f;
+const TPAD = 40, GRASS32 = 0xff295f2f;
 let tex = null, texW = 0, texH = 0, MV = null;
 const MIR = {};
 const EYE_X = 1.3, EYE_Y = 0.37, EYE_H = 1.19;   // right-hand drive: driver sits on the right

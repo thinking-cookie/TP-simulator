@@ -53,6 +53,23 @@ A browser-based trainer that lets learners **drive** the circuit, not just watch
 |---|---|
 | ![Top-down view at the signalised junction](screenshots/cdc-traffic.png) | ![Driver's seat with the beginner guide card](screenshots/beginner-guide.png) |
 
+## Public-road map (Ubi / Paya Lebar)
+
+A third map built from real OpenStreetMap roads around Ubi. It has its own three-leg route, random 2-6 other cars on every reload, and these extra rules:
+
+| Rule | Result |
+|------|--------|
+| Turn on amber without positioning (lane + signal) | +8 demerit |
+| Cross a give-way line fast with a car close by | +8 demerit |
+| Not keeping to your lane | Warning only, no points |
+| Random amber light while moving between legs | Practice scenario (also on the CDC legs) |
+
+Right-turn arrow lamps on a few junctions are **inferred** from OSM turn-lane tags, and give-way lines are **inferred** from where slip roads and minor roads join. Six junctions were checked in Street View (`data/junctions_verified.json`); arrow heads and signs could not be confirmed at that zoom.
+
+Rebuild the map data: `python3 -I tools/build_ubi_map.py data/ubi_osm_raw.json data/ubi_game.json`
+
+Map data: (c) OpenStreetMap contributors, ODbL.
+
 ## Demerit rules used
 
 | Fault | Points |
