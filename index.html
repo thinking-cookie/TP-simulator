@@ -1355,7 +1355,7 @@ const MAPS = {
         signals: UBI.signals.map(g => ({grp:g.grp, a:g.a, b:g.b, dir:g.dir, head:g.head, arrow:g.arrow, lanes:g.lanes, edge:g.edge})),
         stops: [], giveways: UBI.giveways, zebra: dummyZ,
         loops: UBI.loops.map(pts => ({pts:lanePath(pts), cars:1, dense:true})),
-        arrows: UBI.signals.map(g => { const mx = (g.a[0]+g.b[0])/2 - g.dir[0]*12, my = (g.a[1]+g.b[1])/2 - g.dir[1]*12; return [mx, my, Math.atan2(g.dir[1], g.dir[0])]; }),
+        arrows: UBI.signals.filter(g => g.arrow).map(g => { const mx = (g.a[0]+g.b[0])/2 - g.dir[0]*12, my = (g.a[1]+g.b[1])/2 - g.dir[1]*12; return [mx, my, Math.atan2(g.dir[1], g.dir[0])]; }),
         solid: [], scenario: true
       };
     },
@@ -1369,7 +1369,7 @@ const MAPS = {
     draw(now){
       ctx.fillStyle = '#4a893c'; ctx.fillRect(0,0,WW,WH); ctx.fillStyle = '#518f42'; for (let x=0;x<WW;x+=10) ctx.fillRect(x,0,5,WH);
       drawTrees();
-      MAP.paint(ctx, kerbPat, '#3c4047');
+      MAP.paint(ctx, '#a9a9a4', '#3c4047');
       ctx.save(); ctx.lineCap = 'butt'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 0.13;
       const off = (pts, o) => pts.map((q,i) => { const a = pts[Math.max(0,i-1)], b = pts[Math.min(pts.length-1,i+1)], l = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1; return [q[0] + (b[1]-a[1])/l*o, q[1] - (b[0]-a[0])/l*o]; });
       const line = (pts, dash) => { ctx.setLineDash(dash); ctx.beginPath(); pts.forEach((q,i) => i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1])); ctx.stroke(); };
@@ -1379,6 +1379,7 @@ const MAPS = {
         else line(r.p, [4,6]);
       }
       ctx.restore();
+      drawRoadPaint();
     }
   },
 
