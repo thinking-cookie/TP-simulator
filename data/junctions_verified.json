@@ -1,0 +1,12 @@
+{
+  "note": "Street View check, Nov 2026 (imagery Apr 2024 / Jun 2024 / Sep 2022). Lat/lon from OSM signal nodes. Arrow heads and small signs are NOT reliably readable at screenshot resolution, so those fields stay 'unconfirmed'.",
+  "junctions": [
+    {"name":"Ubi Ave 1 / Ubi Rd 3","lat":1.32643,"lon":103.89883,"signalised":"confirmed","yellow_box":false,"lane_arrows_on_road":"straight/left on Ubi Ave 1","arrow_signal_heads":"unconfirmed","give_way_sign":"unconfirmed"},
+    {"name":"Ubi Ave 1 / Ubi Ave 2","lat":1.33030,"lon":103.90012,"signalised":"confirmed","yellow_box":true,"slip_lane_with_island":true,"arrow_signal_heads":"unconfirmed","give_way_sign":"unconfirmed"},
+    {"name":"Ubi Ave 2 / Ubi Rd 3","lat":1.32950,"lon":103.89826,"signalised":"confirmed","yellow_box":true,"slip_lane_with_island":true,"left_turn_arrow_painted":true,"arrow_signal_heads":"unconfirmed","give_way_sign":"unconfirmed"},
+    {"name":"Ubi Ave 2 / Ubi Rd 1","lat":1.32740,"lon":103.89289,"signalised":"confirmed","yellow_box":true,"pedestrian_crossings":true,"arrow_signal_heads":"unconfirmed","give_way_sign":"probable (red-bordered triangle seen on slip lane)"},
+    {"name":"Paya Lebar Rd / Ubi Ave 3","lat":1.33026,"lon":103.88951,"signalised":"confirmed","yellow_box":true,"slip_lane_with_island":true,"arrow_signal_heads":"unconfirmed","give_way_sign":"unconfirmed"},
+    {"name":"Eunos Ave 5 / Eunos Rd 8","lat":1.32030,"lon":103.89300,"signalised":"confirmed","yellow_box":true,"slip_lane_with_island":true,"arrow_signal_heads":"unconfirmed","give_way_sign":"unconfirmed"}
+  ],
+  "not_yet_checked": ["Circuit Rd / Circuit Link","Eunos Ave 5 / Eunos Cres","Ubi Ave 3 / Ubi Rd 1","Paya Lebar Rd / Circuit Link"]
+}
