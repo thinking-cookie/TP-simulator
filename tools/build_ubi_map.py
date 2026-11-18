@@ -42,6 +42,18 @@ for e in d['elements']:
     tl = {k: t[k] for k in ('turn:lanes', 'turn:lanes:forward', 'turn:lanes:backward') if k in t}
     roads.append({'p': [[round(x, 2), round(y, 2)] for x, y in pts], 'w': round(w, 1), 'ow': 1 if ow else 0, 'n': t.get('name', ''), 'c': hw, 'lanes': lanes, 'tl': tl})
 print('roads', len(roads))
+# minor service roads (car parks, access roads): drawn only, not routed, no signals or give-way
+minor = []
+for e in d['elements']:
+    if e['type'] != 'way' or e['tags'].get('highway') != 'service': continue
+    if e['tags'].get('service') in ('parking_aisle',) : continue
+    pts = [P(g['lat'], g['lon']) for g in e['geometry']]
+    keep = [i for i, p in enumerate(pts) if inside(p, 30)]
+    if len(keep) < 2: continue
+    pts = dp(pts[min(keep):max(keep)+1], 0.5)
+    if sum(dist(pts[i], pts[i+1]) for i in range(len(pts)-1)) < 12: continue
+    minor.append({'p': [[round(x, 1), round(y, 1)] for x, y in pts], 'w': 4.6})
+print('minor', len(minor))
 
 # ---- junction centres: the three signalised junctions checked in Street View ----
 sig_nodes = [P(e['lat'], e['lon']) for e in d['elements'] if e['type'] == 'node' and e['tags'].get('highway') == 'traffic_signals' and e['tags'].get('crossing') != 'traffic_signals']
@@ -196,7 +208,7 @@ cn = [nearest(c) for c in cs]
 A = nearest([120, 528]); E = nearest([385, 140])
 tour = route([A, cn[0], cn[1], cn[2], E])
 print('route', None if not tour else len(tour[0]))
-out = {'W': round(WW, 1), 'H': round(WH, 1), 'roads': roads, 'signals': signals, 'giveways': giveways, 'centres': CEN, 'loops': []}
+out = {'W': round(WW, 1), 'H': round(WH, 1), 'roads': roads, 'minor': minor, 'signals': signals, 'giveways': giveways, 'centres': CEN, 'loops': []}
 loopA = route([cn[0], cn[1], cn[2], cn[1], cn[0]])
 loopB = route([cn[2], cn[1], cn[0], cn[1], cn[2]])
 for lp in (loopA, loopB):
